@@ -18,16 +18,23 @@
 
 class DFTNoise
 {
+
 public:
   DFTNoise ();
   virtual
   ~DFTNoise ();
 
 
-  int GetRFSamples(std::complex<double>* addr_rf_samples); /*reads RF samples from stream*/
+  /*reads RF samples from stream*/
+  int GetRFSamples(std::complex<double>* addr_rf_samples);
 
 
-  int ComputeNoiseDFT(); /*computes DFT of input samples*/
+  int Windowing();
+
+
+  /*computes DFT of input samples*/
+  int ComputeNoiseDFT();
+
 
 
   /*TODO: Move functionality to dedicated class*/

@@ -23,6 +23,7 @@
 
 /*class Noise Spectrum Handler takes care of interpreting, exporting and perhaps
  * converting the DFT results*/
+
 class NoiseSpectrumHandler
 {
 public:

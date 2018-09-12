@@ -99,14 +99,14 @@ int Usrp::UsrpConfig()
   std::cout << "Rx Center Frequency set to:  " << usrp_intern->get_rx_freq() << std::endl;
 
 
-  //	/*Gain TODO: Fix*/
-  //	usrp_intern->set_rx_gain(gain);
-  //
-  //	std::cout << "Rx Gain set to: " << usrp_intern->get_rx_gain() << std::endl;
+  /*Gain TODO: Fix*/
+  usrp_intern->set_rx_gain(gain);
+
+  std::cout << "Rx Gain set to: " << usrp_intern->get_rx_gain() << std::endl;
 
 
   /*Antenna*/
-  /*TODO*/
+  /*TODO: If necessary*/
 
 
   return 0;
@@ -140,11 +140,28 @@ int Usrp::UsrpStartUp()
 std::complex<double>* Usrp::UsrpRFDataAcquisition()
 {
 
-  std::vector<std::complex<double>> dummy; /*For Debugging Use*/
+  /*For Debugging Use Only*/
+  std::vector<std::complex<double>> dummy;
 
 
-  /*RECEIVING*/
-  size_t num_rx_samples = rx_stream->recv(&buffs.front(), buffs.size(),md, 10);
+  size_t num_rx_samples = 0;
+
+  /* RECEIVING */
+  do{
+      num_rx_samples = rx_stream->recv(&buffs.front(), buffs.size(), md, 1);
+
+      if(num_rx_samples < DEF_FFT_BINSIZE)
+	{
+	  /*For Debugging only*/
+	  if(num_rx_samples != DEF_FFT_BINSIZE)
+	    {
+	      std::cout << "ERROR: Number of acquired I/Q samples: "  <<  num_rx_samples   << "\nDiscard samples..."<< std::endl;
+	    }
+
+
+	}
+
+  }while(num_rx_samples != DEF_FFT_BINSIZE);
 
   /*incrementing extern control variable*/
   ext_num_FILE_recv_RF_samps = ext_num_FILE_recv_RF_samps + num_rx_samples;
@@ -152,11 +169,6 @@ std::complex<double>* Usrp::UsrpRFDataAcquisition()
   /*incrementing extern control variable*/
   ext_num_INT_recv_RF_samps = ext_num_INT_recv_RF_samps + num_rx_samples;
 
-  /*For Debugging only*/
-  if(num_rx_samples != DEF_FFT_BINSIZE)
-    {
-      std::cout << num_rx_samples << std::endl;
-    }
 
 
   return &buffs[0]; /*returns buffer containing the last received samples*/

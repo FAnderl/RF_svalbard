@@ -45,6 +45,14 @@ int DFTNoise::GetRFSamples(std::complex<double> *addr_rf_samples)
 }
 
 
+/*Applies windowing to RF samples BEFORE applying DFT */
+int DFTNoise::Windowing()
+{
+
+
+}
+
+
 int DFTNoise::ComputeNoiseDFT()
 {
 

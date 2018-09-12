@@ -13,11 +13,6 @@
 #include <vector>
 
 
-///*Generic includes*/
-//#include <gnuradio/uhd/usrp_source.h>
-//#include <gnuradio/uhd/api.h>
-//#include <gnuradio/uhd/usrp_block.h>
-
 
 /*Includes from https://kb.ettus.com/Getting_Started_with_UHD_and_C%2B%2B#Create_Variables (UHD c++ API Documentation)*/
 #include <uhd/utils/thread.hpp>

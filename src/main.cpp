@@ -39,11 +39,11 @@ int main(int argc, char * argv[])
   cxxopts::Options cmlo("NoiseMapCPP", "UNIS Svalbard RF Background Recording (SuperDARN, KHO)");
 
   cmlo.add_options()
-				("a, deviceAddress" , " USRP hardware address; if not defined default address (192.68.10.2) is used", cxxopts::value<std::string>())
-				("l, lowerFrequency" , "Defines lower threshold for recorded band",cxxopts::value<uint64_t>())
-				("u, upperFrequency","Defines upper threshold for recorded band ",cxxopts::value<uint64_t>())
-				("g, gain", "Defines USRP Rx gain",cxxopts::value<int8_t>())
-				;
+					("a, deviceAddress" , " USRP hardware address; if not defined default address (192.68.10.2) is used", cxxopts::value<std::string>())
+					("l, lowerFrequency" , "Defines lower threshold for recorded band",cxxopts::value<uint64_t>())
+					("u, upperFrequency","Defines upper threshold for recorded band ",cxxopts::value<uint64_t>())
+					("g, gain", "Defines USRP Rx gain",cxxopts::value<int8_t>())
+					;
 
 
   auto result = cmlo.parse(argc, argv);
@@ -82,15 +82,39 @@ int main(int argc, char * argv[])
 
 	  if(result.count("a") == 1)
 	    {
-	      usrp_wrapper = new Usrp(result["a"].as<std::string>(), result["l"].as<uint64_t>(),
-				      result["u"].as<uint64_t>(), 0.0 ); /*TODO: rework gain*/
+
+	      if(result["g"].count() == 1)
+		{
+		  usrp_wrapper = new Usrp(result["a"].as<std::string>(), result["l"].as<uint64_t>(),
+					  result["u"].as<uint64_t>(), result["g"].as<int8_t>() );
+		}
+
+	      else
+		{
+		  usrp_wrapper = new Usrp(result["a"].as<std::string>(), result["l"].as<uint64_t>(),
+					  result["u"].as<uint64_t>(), DEF_GAIN);
+
+		}
 	    }
 
 	  else
 	    {
+
+
 	      std::cout << "INFO: No USRP address defined -> using default address: 192.168.10.2 ";
-	      usrp_wrapper = new Usrp(const_usrp_addr, result["l"].as<uint64_t>(),
-				      result["u"].as<uint64_t>(), 0.0 ); /*TODO: rework gain*/
+
+	      if(result["g"].count() == 1)
+		{
+		  usrp_wrapper = new Usrp(result["a"].as<std::string>(), result["l"].as<uint64_t>(),
+					  result["u"].as<uint64_t>(), result["g"].as<int8_t>() );
+		}
+
+	      else
+		{
+		  usrp_wrapper = new Usrp(result["a"].as<std::string>(), result["l"].as<uint64_t>(),
+					  result["u"].as<uint64_t>(), DEF_GAIN);
+
+		}
 	    }
 
 	}

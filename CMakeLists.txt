@@ -12,6 +12,10 @@ cmake_minimum_required(VERSION 2.8)
 # probably need some special care!)
 # Set this to ON in order to link a static build of UHD:
 option(UHD_USE_STATIC_LIBS OFF)
+set(UHD_USE_STATIC_LIBS OFF)
+
+
+message(STATUS "(1)Status of variable: " ${UHD_USE_STATIC_LIBS})
 
 # This example also requires Boost:
 set(BOOST_REQUIRED_COMPONENTS
@@ -62,7 +66,10 @@ include_directories(
     
     	
 )
-link_directories(${Boost_LIBRARY_DIRS} /home/unis/UNIS/Software/fftw-3.3.8/build  /usr/lib )
+
+message(WARNING "BOOST_LIBRARY_DIRS" ${Boost_LIBRARY_DIRS})
+
+link_directories(${Boost_LIBRARY_DIRS} /home/unis/UNIS/Software/fftw-3.3.8/build  /usr/lib /usr/local/lib)
 
 ### Make the executable #######################################################
 add_executable(RF_Svalbard ./src/main.cpp ./src/DFTNoise.cpp ./src/NoiseSpectrumHandler.cpp ./src/Usrp.cpp)
@@ -75,23 +82,39 @@ MESSAGE(STATUS "* exactly match what you require. Make sure to double-check comp
 MESSAGE(STATUS "* linker flags to make sure your specific requirements are included.          ")
 MESSAGE(STATUS "******************************************************************************")
 
+
+
 # Shared library case: All we need to do is link against the library, and
 # anything else we need (in this case, some Boost libraries):
 if(NOT UHD_USE_STATIC_LIBS)
+	message(STATUS "Status of variable: " ${UHD_USE_STATIC_LIBS})
     message(STATUS "Linking against shared UHD library.")
     target_link_libraries(RF_Svalbard ${UHD_LIBRARIES} ${Boost_LIBRARIES} m fftw3 )
 # Shared library case: All we need to do is link against the library, and
 # anything else we need (in this case, some Boost libraries):
 else(NOT UHD_USE_STATIC_LIBS)
+	message(STATUS "Status of variable UHD_STATIC_LIB_DEPS: " ${UHD_STATIC_LIB_DEPS})
+	message(STATUS "Status of variable UHD_STATIC_LIB_LINK_FLAG: " ${UHD_STATIC_LIB_LINK_FLAG})
     message(STATUS "Linking against static UHD library.")
-    target_link_libraries(RF_Svalbard
+    target_link_libraries(RF_Svalbard 
+		
         # We could use ${UHD_LIBRARIES}, but linking requires some extra flags,
         # so we use this convenience variable provided to us
         ${UHD_STATIC_LIB_LINK_FLAG}
         # Also, when linking statically, we need to pull in all the deps for
         # UHD as well, because the dependencies don't get resolved automatically
-        ${UHD_STATIC_LIB_DEPS}
-    )
+         ${UHD_STATIC_LIB_DEPS}
+        
+        # Custom Linking options added by Florian Anderl (UNIS)
+		libm.a 
+		libfftw3.a 
+
+
+		
+)
+
+
+
 endif(NOT UHD_USE_STATIC_LIBS)
 
 ### Once it's built... ########################################################
