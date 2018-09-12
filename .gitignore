@@ -3,3 +3,5 @@
 .cproject
 /Debug
 /Release
+.project
+*.csv
