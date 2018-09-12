@@ -11,11 +11,11 @@
 /*Project-specific includes*/
 #include "../Usrp.h"
 #include "../defines.h"
-
+#include <uhd/error.h>
+#include <uhd/exception.hpp>
 uint64_t ext_sample_rate;
 uint64_t ext_lower_frequency;
 uint64_t ext_upper_frequency;
-
 
 Usrp::Usrp(): usrp_address(const_usrp_addr),center_frequency(DEF_CENT_FREQ), lower_frequency(DEF_L_FREQ),
     upper_frequency(DEF_U_FREQ),sample_rate(DEF_SAMP_RATE), gain(DEF_GAIN)
@@ -34,7 +34,8 @@ Usrp::Usrp(): usrp_address(const_usrp_addr),center_frequency(DEF_CENT_FREQ), low
 
 Usrp::~Usrp()
 {
-
+buffs.clear();
+rx_stream->issue_stream_cmd(uhd::stream_cmd_t::STREAM_MODE_STOP_CONTINUOUS);
 }
 
 
@@ -91,6 +92,8 @@ int Usrp::UsrpConfig()
   std::cout << "Rx Sample Rate set to:  " << usrp_intern->get_rx_rate() << std::endl;
 
 
+
+
   /*Center Frequency*/
   uhd::tune_request_t tune_request(center_frequency); /*makes tune request to lo for mixing down to baseband in analog frontend*/
 
@@ -126,6 +129,8 @@ int Usrp::UsrpStartUp()
   rx_stream = usrp_intern->get_rx_stream(stream_args);
 
 
+
+  /*TODO: try different stream commands*/
   uhd::stream_cmd_t sc(uhd::stream_cmd_t::STREAM_MODE_START_CONTINUOUS);
   sc.stream_now = true;
 
@@ -137,6 +142,10 @@ int Usrp::UsrpStartUp()
 }
 
 
+
+
+
+
 std::complex<double>* Usrp::UsrpRFDataAcquisition()
 {
 
@@ -144,30 +153,54 @@ std::complex<double>* Usrp::UsrpRFDataAcquisition()
   std::vector<std::complex<double>> dummy;
 
 
+  char error_c[50];
+
+
+
+
   size_t num_rx_samples = 0;
 
-  /* RECEIVING */
+  /* ACTUAL STREAMING*/
   do{
-      num_rx_samples = rx_stream->recv(&buffs.front(), buffs.size(), md, 1);
 
-      if(num_rx_samples != DEF_FFT_BINSIZE)
+      num_rx_samples = rx_stream->recv(&buffs.front(), buffs.size(), md, 100);
+
+
+      if (num_rx_samples != buffs.size() && num_rx_samples != 0)
+	{
+	  std::cout << "-------------------------------------\nWARNING: HOST received less samples from USRP than expected\nSamples received: "
+	      << num_rx_samples << "\nWaiting for samples...\n-------------------------------------------"<< std::endl;
+	}
+
+      if(num_rx_samples == 0)
 	{
 	  /*For Debugging only*/
-	  if(num_rx_samples != DEF_FFT_BINSIZE)
-	    {
-	      std::cout << "ERROR: Number of acquired I/Q samples: "  <<  num_rx_samples   << "\nDiscard samples..."<< std::endl;
-	    }
+	  std::cout << "ERROR: Number of acquired I/Q samples: "  <<  num_rx_samples   <<
+	      "\nDiscard samples due to overflow in USRP"<< std::endl;
 
-	  /*Deletes Contents of Vector*/
-	  buffs.clear();
+	  uhd_get_last_error(error_c, 50);
+
+	  std::cout << "UHD_ERROR: " << std::string(error_c) << std::endl;
+
 
 	  /*Reset recv-counter*/
 	  num_rx_samples = 0;
 
 
+
 	}
 
-  }while(num_rx_samples != DEF_FFT_BINSIZE);
+  }while(num_rx_samples < DEF_FFT_BINSIZE);
+
+
+
+  if (num_rx_samples != DEF_FFT_BINSIZE)
+    {
+      std::cout << "CRITICAL ERROR: FALSE NUMBER OF SAMPLES... ABORT" <<std::endl;
+      exit(-1);
+    }
+
+  /*NOTE: num_rx_samps has to have specified & expected size at this point*/
 
   /*incrementing extern control variable*/
   ext_num_FILE_recv_RF_samps = ext_num_FILE_recv_RF_samps + num_rx_samples;
