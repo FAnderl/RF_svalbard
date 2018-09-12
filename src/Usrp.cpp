@@ -150,13 +150,19 @@ std::complex<double>* Usrp::UsrpRFDataAcquisition()
   do{
       num_rx_samples = rx_stream->recv(&buffs.front(), buffs.size(), md, 1);
 
-      if(num_rx_samples < DEF_FFT_BINSIZE)
+      if(num_rx_samples != DEF_FFT_BINSIZE)
 	{
 	  /*For Debugging only*/
 	  if(num_rx_samples != DEF_FFT_BINSIZE)
 	    {
 	      std::cout << "ERROR: Number of acquired I/Q samples: "  <<  num_rx_samples   << "\nDiscard samples..."<< std::endl;
 	    }
+
+	  /*Deletes Contents of Vector*/
+	  buffs.clear();
+
+	  /*Reset recv-counter*/
+	  num_rx_samples = 0;
 
 
 	}
