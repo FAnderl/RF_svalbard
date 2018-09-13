@@ -12,7 +12,7 @@
 
 NoiseSpectrumHandler::NoiseSpectrumHandler () : nsh_DFT_samples(NULL), nsh_pwr_DFT_samples(NULL)
 {
- /*DEPRECATED: Do never use the default constructor*/
+  /*DEPRECATED: Do never use the default constructor*/
 
 }
 
@@ -151,8 +151,18 @@ int NoiseSpectrumHandler::ExportRawDataToFile()
 
   for(int i = 0; i< DEF_FFT_BINSIZE; i++)
     {
-      f_noise_spectrum <<  nsh_pwr_DFT_samples[i] << ",";
+      if(i == DEF_FFT_BINSIZE-1)
+	{
+	  f_noise_spectrum <<  nsh_pwr_DFT_samples[i]M
+	}
+      else
+	{
+	  f_noise_spectrum <<  nsh_pwr_DFT_samples[i] << ",";
+	}
     }
+
+
+
 
   /*new line for new DEF_FFT_SIZE samples*/
   f_noise_spectrum << "\n";
