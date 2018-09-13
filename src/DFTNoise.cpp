@@ -56,7 +56,7 @@ int DFTNoise::Windowing()
   /*TODO: Verify that the window being of type FLOAT is not a problem !
    *
    * Sets up blackmann window of size FFT_SIZE*/
-  gr::fft::window blackmann_window = gr::fft::window::blackman(DEF_FFT_BINSIZE);
+  std::vector<float> blackmann_window = gr::fft::window::blackman(DEF_FFT_BINSIZE);
 
 
   /*Apply blackmann window to TIME DOMAIN input samples*/

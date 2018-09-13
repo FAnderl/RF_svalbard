@@ -89,7 +89,7 @@ MESSAGE(STATUS "****************************************************************
 if(NOT UHD_USE_STATIC_LIBS)
 	message(STATUS "Status of variable: " ${UHD_USE_STATIC_LIBS})
     message(STATUS "Linking against shared UHD library.")
-    target_link_libraries(RF_Svalbard ${UHD_LIBRARIES} ${Boost_LIBRARIES} m fftw3 )
+    target_link_libraries(RF_Svalbard ${UHD_LIBRARIES} ${Boost_LIBRARIES} m fftw3 gnuradio-fft)
 # Shared library case: All we need to do is link against the library, and
 # anything else we need (in this case, some Boost libraries):
 else(NOT UHD_USE_STATIC_LIBS)
