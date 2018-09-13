@@ -216,6 +216,11 @@ int main(int argc, char * argv[])
 
 	  dft_wrapper->GetRFSamples(temp_buff_rf);
 
+
+	  /*Applies window function in TIME DOMAIN*/
+	  dft_wrapper->Windowing();
+
+
 	  dft_wrapper->ComputeNoiseDFT();
 
 	  /*TODO: test & verify*/

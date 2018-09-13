@@ -11,8 +11,8 @@
 /*Project-specific includes*/
 #include "../Usrp.h"
 #include "../defines.h"
-#include <uhd/error.h>
-#include <uhd/exception.hpp>
+
+
 uint64_t ext_sample_rate;
 uint64_t ext_lower_frequency;
 uint64_t ext_upper_frequency;
@@ -21,7 +21,8 @@ Usrp::Usrp(): usrp_address(const_usrp_addr),center_frequency(DEF_CENT_FREQ), low
     upper_frequency(DEF_U_FREQ),sample_rate(DEF_SAMP_RATE), gain(DEF_GAIN)
 {
 
-  buffs.resize(DEF_FFT_BINSIZE); /*Allocates memory for received data samples*/
+  /*Allocates memory for received data samples*/
+  buffs.resize(DEF_FFT_BINSIZE);
 
   ext_sample_rate = uint64_t(DEF_SAMP_RATE);
 
@@ -34,8 +35,8 @@ Usrp::Usrp(): usrp_address(const_usrp_addr),center_frequency(DEF_CENT_FREQ), low
 
 Usrp::~Usrp()
 {
-buffs.clear();
-rx_stream->issue_stream_cmd(uhd::stream_cmd_t::STREAM_MODE_STOP_CONTINUOUS);
+  buffs.clear();
+  rx_stream->issue_stream_cmd(uhd::stream_cmd_t::STREAM_MODE_STOP_CONTINUOUS);
 }
 
 
@@ -43,15 +44,15 @@ Usrp::Usrp(std::string usrp_addr, uint64_t l_freq, uint64_t u_freq , int8_t Gain
     upper_frequency(u_freq), gain(Gain)
 {
 
-  buffs.resize(DEF_FFT_BINSIZE);  /*Allocates memory for received data samples*/
+  /*Allocates memory for received data samples*/
+  buffs.resize(DEF_FFT_BINSIZE);
 
-
-  /*calculate usrp center frequency from cmd-defined parameters*/
+  /*Calculate usrp center frequency from cmd-defined parameters*/
   center_frequency = lower_frequency + (upper_frequency - lower_frequency)/2;
 
-  /*calculate usrp center frequency from cmd-defined parameters
+  /*Calculate usrp center frequency from cmd-defined parameters
    * TODO: rework -> fixed set of possible sample rates*/
-  sample_rate = upper_frequency - lower_frequency + 5e5; /*TODO: rework*/
+  sample_rate = upper_frequency - lower_frequency + 0.05*(upper_frequency - lower_frequency); /*TODO: 5 percent overhead*/
 
   ext_sample_rate = sample_rate;
 
@@ -156,41 +157,21 @@ std::complex<double>* Usrp::UsrpRFDataAcquisition()
   char error_c[50];
 
 
-
-
   size_t num_rx_samples = 0;
 
   /* ACTUAL STREAMING*/
   do{
 
-      num_rx_samples = rx_stream->recv(&buffs.front(), buffs.size(), md, 100);
+
+      /*TODO: Check Data types & validity of pointers/adresses & method arguments*/
+
+      /*recv timeout currently set to 1 second*/
+      num_rx_samples = rx_stream->recv(&buffs.front(), buffs.size(), md, 1);
+
+      if(num_rx_samples != buffs.size()){continue;}
 
 
-      if (num_rx_samples != buffs.size() && num_rx_samples != 0)
-	{
-	  std::cout << "-------------------------------------\nWARNING: HOST received less samples from USRP than expected\nSamples received: "
-	      << num_rx_samples << "\nWaiting for samples...\n-------------------------------------------"<< std::endl;
-	}
-
-      if(num_rx_samples == 0)
-	{
-	  /*For Debugging only*/
-	  std::cout << "ERROR: Number of acquired I/Q samples: "  <<  num_rx_samples   <<
-	      "\nDiscard samples due to overflow in USRP"<< std::endl;
-
-	  uhd_get_last_error(error_c, 50);
-
-	  std::cout << "UHD_ERROR: " << std::string(error_c) << std::endl;
-
-
-	  /*Reset recv-counter*/
-	  num_rx_samples = 0;
-
-
-
-	}
-
-  }while(num_rx_samples < DEF_FFT_BINSIZE);
+  }while(num_rx_samples != DEF_FFT_BINSIZE);
 
 
 
@@ -210,6 +191,7 @@ std::complex<double>* Usrp::UsrpRFDataAcquisition()
 
 
 
-  return &buffs[0]; /*returns buffer containing the last received samples*/
+  return &buffs[0]; /*returns pointer to adress of FIRST ELEMENT of
+  buffer containing the last received samples*/
 }
 

@@ -52,7 +52,7 @@ int NoiseSpectrumHandler::FileConfig(time_t start_time)
   struct tm *timeinfo = localtime(&start_time);
 
   /*Formats time string*/
-  strftime(buffer, 20, "%Y%m%d_%H%M%S", timeinfo);
+  strftime(buffer, 20, "%Y%m%d_T%H%M%S", timeinfo);
 
   date_time_str = buffer;
 

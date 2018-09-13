@@ -13,7 +13,12 @@
 #include <fftw3.h>
 
 
-/*-------------------------- GLOBAL CONSTANTS-------------------------------*/
+/*---------------VERSION INFORMATION -----------------------*/
+const std::string version_number = "0.1";
+
+
+
+/*--------------------------GLOBAL CONSTANTS-------------------------------*/
 
 const uint64_t DEF_CENT_FREQ = 14000000;
 const uint64_t DEF_L_FREQ = 8000000;
