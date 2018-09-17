@@ -36,14 +36,14 @@ int main(int argc, char * argv[])
 
   /*Command Line Parser*/
 
-  cxxopts::Options cmlo("NoiseMapCPP", "UNIS Svalbard RF Background Recording (SuperDARN, KHO)");
+  cxxopts::Options cmlo("RF_Svalbard", "UNIS Svalbard RF Background Recording (SuperDARN, KHO)");
 
   cmlo.add_options()
-					("a, deviceAddress" , " USRP hardware address; if not defined default address (192.68.10.2) is used", cxxopts::value<std::string>())
-					("l, lowerFrequency" , "Defines lower threshold for recorded band",cxxopts::value<uint64_t>())
-					("u, upperFrequency","Defines upper threshold for recorded band ",cxxopts::value<uint64_t>())
-					("g, gain", "Defines USRP Rx gain",cxxopts::value<int8_t>())
-					;
+						("a, deviceAddress" , " USRP hardware address; if not defined default address (192.68.10.2) is used", cxxopts::value<std::string>())
+						("l, lowerFrequency" , "Defines lower threshold for recorded band",cxxopts::value<uint64_t>())
+						("u, upperFrequency","Defines upper threshold for recorded band ",cxxopts::value<uint64_t>())
+						("g, gain", "Defines USRP Rx gain",cxxopts::value<int8_t>())
+						;
 
 
   auto result = cmlo.parse(argc, argv);
@@ -85,13 +85,14 @@ int main(int argc, char * argv[])
 
 	      if(result["g"].count() == 1)
 		{
+		  puts("gain specified");
 		  usrp_wrapper = new Usrp(result["a"].as<std::string>(), result["l"].as<uint64_t>(),
 					  result["u"].as<uint64_t>(), result["g"].as<int8_t>() );
 		}
 
 	      else
 		{
-		  usrp_wrapper = new Usrp(result["a"].as<std::string>(), result["l"].as<uint64_t>(),
+		  usrp_wrapper = new Usrp(const_usrp_addr, result["l"].as<uint64_t>(),
 					  result["u"].as<uint64_t>(), DEF_GAIN);
 
 		}
@@ -105,13 +106,14 @@ int main(int argc, char * argv[])
 
 	      if(result["g"].count() == 1)
 		{
-		  usrp_wrapper = new Usrp(result["a"].as<std::string>(), result["l"].as<uint64_t>(),
+		  usrp_wrapper = new Usrp(const_usrp_addr, result["l"].as<uint64_t>(),
 					  result["u"].as<uint64_t>(), result["g"].as<int8_t>() );
+		  puts("gain specified");
 		}
 
 	      else
 		{
-		  usrp_wrapper = new Usrp(result["a"].as<std::string>(), result["l"].as<uint64_t>(),
+		  usrp_wrapper = new Usrp(const_usrp_addr, result["l"].as<uint64_t>(),
 					  result["u"].as<uint64_t>(), DEF_GAIN);
 
 		}
@@ -218,7 +220,7 @@ int main(int argc, char * argv[])
 
 
 	  /*Applies window function in TIME DOMAIN*/
-	  dft_wrapper->Windowing();
+	  //dft_wrapper->Windowing(); /*TODO: Preliminarily commented out*/
 
 
 	  dft_wrapper->ComputeNoiseDFT();
@@ -227,10 +229,12 @@ int main(int argc, char * argv[])
 	  nsh->GetDFTData(dft_wrapper->ExportDFTResults());
 
 
+
 	  /*TODO: INVESTIGATE (Careful with BIGGER OR EQUALITY)!!!!!!*/
 	  if((ext_num_INT_recv_RF_samps) >= (DEF_INTEGRATION_CONST * ext_sample_rate))
 	    {
-	      /*integrate DFT results TODO: go in function & fix it */
+
+	      /*Computes Average*/
 	      nsh->IntegrateDFT();
 
 	      /*Converts DFT data: complex->magNitude*/

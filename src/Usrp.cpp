@@ -8,11 +8,11 @@
  *      Author: Florian Anderl (Guest Master Student AGF)
  */
 
-/*Project-specific includes*/
+
 #include "../Usrp.h"
 #include "../defines.h"
 
-
+/*Declaration of global variables*/
 uint64_t ext_sample_rate;
 uint64_t ext_lower_frequency;
 uint64_t ext_upper_frequency;
@@ -29,6 +29,8 @@ Usrp::Usrp(): usrp_address(const_usrp_addr),center_frequency(DEF_CENT_FREQ), low
   ext_lower_frequency = uint64_t(DEF_L_FREQ);
 
   ext_upper_frequency = uint64_t(DEF_U_FREQ);
+
+  puts("USRP Constructor");
 
 }
 
@@ -60,6 +62,8 @@ Usrp::Usrp(std::string usrp_addr, uint64_t l_freq, uint64_t u_freq , int8_t Gain
 
   ext_upper_frequency = upper_frequency;
 
+
+  puts("USRP Constructor");
 
 
 }
@@ -103,10 +107,10 @@ int Usrp::UsrpConfig()
   std::cout << "Rx Center Frequency set to:  " << usrp_intern->get_rx_freq() << std::endl;
 
 
-  /*Gain TODO: Fix*/
-  usrp_intern->set_rx_gain(gain);
-
-  std::cout << "Rx Gain set to: " << usrp_intern->get_rx_gain() << std::endl;
+  /*Gain TODO: Fix && Uncomment*/
+//  usrp_intern->set_rx_gain(gain);
+//
+//  std::cout << "Rx Gain set to: " << usrp_intern->get_rx_gain() << std::endl;
 
 
   /*Antenna*/
@@ -128,7 +132,6 @@ int Usrp::UsrpStartUp()
 
   /*make receiver stream object*/
   rx_stream = usrp_intern->get_rx_stream(stream_args);
-
 
 
   /*TODO: try different stream commands*/
@@ -154,9 +157,6 @@ std::complex<double>* Usrp::UsrpRFDataAcquisition()
   std::vector<std::complex<double>> dummy;
 
 
-  char error_c[50];
-
-
   size_t num_rx_samples = 0;
 
   /* ACTUAL STREAMING*/
@@ -167,6 +167,12 @@ std::complex<double>* Usrp::UsrpRFDataAcquisition()
 
       /*recv timeout currently set to 1 second*/
       num_rx_samples = rx_stream->recv(&buffs.front(), buffs.size(), md, 1);
+
+      /*For DEBUGGING ONLY*/
+//      for(int i = 0; i< buffs.size(); i++)
+//	{
+//	  std::cout << buffs[i] << ",";
+//	}
 
       if(num_rx_samples != buffs.size()){continue;}
 

@@ -14,7 +14,20 @@ NoiseSpectrumHandler::NoiseSpectrumHandler () : nsh_DFT_samples(NULL), nsh_pwr_D
 {
   /*DEPRECATED: Do never use the default constructor*/
 
+
+  active_rf_mode = RFmode::standard_band;
+
+  integration_DFT_buffer = new fftw_complex[DEF_FFT_BINSIZE];
+
+  for(int i = 0; i< DEF_FFT_BINSIZE; i++)
+    {
+      integration_DFT_buffer[i][0] = 0;
+      integration_DFT_buffer[i][1] = 0;
+    }
+
+
 }
+
 
 NoiseSpectrumHandler::~NoiseSpectrumHandler ()
 {
@@ -22,6 +35,8 @@ NoiseSpectrumHandler::~NoiseSpectrumHandler ()
   f_noise_spectrum.close();
 
 }
+
+
 
 NoiseSpectrumHandler::NoiseSpectrumHandler(RFmode rf_m) : nsh_DFT_samples(NULL), nsh_pwr_DFT_samples(NULL)
 {
@@ -60,7 +75,7 @@ int NoiseSpectrumHandler::FileConfig(time_t start_time)
 
   switch(active_rf_mode)
   {
-    case RFmode::standard_band : frequency_band_str = "8to20Mhz"; break;
+    case RFmode::standard_band : frequency_band_str = "8to20Mhz(Standardband)"; break;
     case RFmode::alternative_band: frequency_band_str = std::to_string(int(ext_lower_frequency)/1e3)+"_"
 	+std::to_string(int(ext_upper_frequency)/1e3)+"kHz";
 
@@ -79,6 +94,8 @@ int NoiseSpectrumHandler::FileConfig(time_t start_time)
 /*Implements the Integration functionality*/
 int NoiseSpectrumHandler::IntegrateDFT()
 {
+
+
 
   /*Copy samples to integration buffer*/
   for(int i = 0; i < DEF_FFT_BINSIZE; i++)
@@ -153,7 +170,7 @@ int NoiseSpectrumHandler::ExportRawDataToFile()
     {
       if(i == DEF_FFT_BINSIZE-1)
 	{
-	  f_noise_spectrum <<  nsh_pwr_DFT_samples[i]M
+	  f_noise_spectrum <<  nsh_pwr_DFT_samples[i];
 	}
       else
 	{
