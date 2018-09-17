@@ -17,14 +17,12 @@ NoiseSpectrumHandler::NoiseSpectrumHandler () : nsh_DFT_samples(NULL), nsh_pwr_D
 
   active_rf_mode = RFmode::standard_band;
 
-  integration_DFT_buffer = new fftw_complex[DEF_FFT_BINSIZE];
+  integration_PWR_buffer = new double[DEF_FFT_BINSIZE];
 
   for(int i = 0; i< DEF_FFT_BINSIZE; i++)
     {
-      integration_DFT_buffer[i][0] = 0;
-      integration_DFT_buffer[i][1] = 0;
+      integration_PWR_buffer[i] = 0;
     }
-
 
 }
 
@@ -45,12 +43,11 @@ NoiseSpectrumHandler::NoiseSpectrumHandler(RFmode rf_m) : nsh_DFT_samples(NULL),
 
   nsh_pwr_DFT_samples = new double[DEF_FFT_BINSIZE];
 
-  integration_DFT_buffer = new fftw_complex[DEF_FFT_BINSIZE];
+  integration_PWR_buffer = new double[DEF_FFT_BINSIZE];
 
   for(int i = 0; i< DEF_FFT_BINSIZE; i++)
     {
-      integration_DFT_buffer[i][0] = 0;
-      integration_DFT_buffer[i][1] = 0;
+      integration_PWR_buffer[i] = 0;
     }
 
   frequency_band_str = "";
@@ -92,17 +89,14 @@ int NoiseSpectrumHandler::FileConfig(time_t start_time)
 
 
 /*Implements the Integration functionality*/
-int NoiseSpectrumHandler::IntegrateDFT()
+int NoiseSpectrumHandler::IntegratePWR()
 {
-
 
 
   /*Copy samples to integration buffer*/
   for(int i = 0; i < DEF_FFT_BINSIZE; i++)
     {
-      integration_DFT_buffer[i][0] = integration_DFT_buffer[i][0]/ (DEF_INTEGRATION_CONST*ext_sample_rate);
-      integration_DFT_buffer[i][1] = integration_DFT_buffer[i][1]/ (DEF_INTEGRATION_CONST*ext_sample_rate);
-
+      integration_PWR_buffer[i] = integration_PWR_buffer[i]/ (DEF_INTEGRATION_CONST*ext_sample_rate);
     }
 
   return 0;
@@ -119,24 +113,15 @@ int NoiseSpectrumHandler::ConvertDFTData()
   for(int i = 0; i < DEF_FFT_BINSIZE; i++)
     {
 
-      nsh_pwr_DFT_samples[i] =  double(1.0/DEF_FFT_BINSIZE) * (sqrt((integration_DFT_buffer[i][0]*integration_DFT_buffer[i][0])+
-								    (integration_DFT_buffer[i][1]*integration_DFT_buffer[i][1]))*sqrt((integration_DFT_buffer[i][0]*integration_DFT_buffer[i][0])+
-																      (integration_DFT_buffer[i][1]*integration_DFT_buffer[i][1])));
+      integration_PWR_buffer[i] =  integration_PWR_buffer[i] +
+	  (double(1.0/DEF_FFT_BINSIZE) *
+	      (sqrt((nsh_DFT_samples[i][0]*nsh_DFT_samples[i][0])+
+		    (nsh_DFT_samples[i][1]*nsh_DFT_samples[i][1]))*sqrt((nsh_DFT_samples[i][0]*nsh_DFT_samples[i][0])+
+									(nsh_DFT_samples[i][1]*nsh_DFT_samples[i][1]))));
       /*TODO: Verify equation for DFT power spectrum:  1/n * F²*/
 
     }
 
-
-  /*Deletion & Re-Initialization of integration buffer*/
-  delete integration_DFT_buffer;
-
-  integration_DFT_buffer = new fftw_complex[DEF_FFT_BINSIZE];
-
-  for(int i = 0; i< DEF_FFT_BINSIZE; i++)
-    {
-      integration_DFT_buffer[i][0] = 0;
-      integration_DFT_buffer[i][1] = 0;
-    }
 
 
   return 0;
@@ -150,14 +135,6 @@ int NoiseSpectrumHandler::GetDFTData(fftw_complex *DFTsamples)
 
   nsh_DFT_samples = DFTsamples;
 
-  /*Copy samples to integration buffer*/
-  for(int i = 0; i < DEF_FFT_BINSIZE; i++)
-    {
-      integration_DFT_buffer[i][0] = integration_DFT_buffer[i][0] + nsh_DFT_samples[i][0];
-      integration_DFT_buffer[i][1] = integration_DFT_buffer[i][1] + nsh_DFT_samples[i][1];
-
-    }
-
   return 0;
 }
 
@@ -170,11 +147,11 @@ int NoiseSpectrumHandler::ExportRawDataToFile()
     {
       if(i == DEF_FFT_BINSIZE-1)
 	{
-	  f_noise_spectrum <<  nsh_pwr_DFT_samples[i];
+	  f_noise_spectrum <<  integration_PWR_buffer[i];
 	}
       else
 	{
-	  f_noise_spectrum <<  nsh_pwr_DFT_samples[i] << ",";
+	  f_noise_spectrum <<  integration_PWR_buffer[i] << ",";
 	}
     }
 
@@ -184,5 +161,16 @@ int NoiseSpectrumHandler::ExportRawDataToFile()
   /*new line for new DEF_FFT_SIZE samples*/
   f_noise_spectrum << "\n";
 
+
+
+  /*Deletion & Re-Initialization of integration buffer*/
+  delete integration_PWR_buffer;
+
+  integration_PWR_buffer = new double[DEF_FFT_BINSIZE];
+
+  for(int i = 0; i< DEF_FFT_BINSIZE; i++)
+    {
+      integration_PWR_buffer[i] = 0;
+    }
   return 0;
 }

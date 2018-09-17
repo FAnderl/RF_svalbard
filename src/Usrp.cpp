@@ -56,7 +56,6 @@ Usrp::Usrp(std::string usrp_addr, uint64_t l_freq, uint64_t u_freq , int8_t Gain
    * TODO: rework -> fixed set of possible sample rates*/
   sample_rate = upper_frequency - lower_frequency + 0.05*(upper_frequency - lower_frequency); /*TODO: 5 percent overhead*/
 
-  ext_sample_rate = sample_rate;
 
   ext_lower_frequency = lower_frequency;
 
@@ -94,7 +93,11 @@ int Usrp::UsrpConfig()
   /*Sample Rate*/
   usrp_intern->set_rx_rate(sample_rate);  /*sets Rx sample rate*/
 
-  std::cout << "Rx Sample Rate set to:  " << usrp_intern->get_rx_rate() << std::endl;
+  sample_rate = usrp_intern->get_rx_rate();
+
+  ext_sample_rate = sample_rate;
+
+  std::cout << "Rx Sample Rate set to:  " << sample_rate << std::endl;
 
 
 

@@ -39,11 +39,11 @@ int main(int argc, char * argv[])
   cxxopts::Options cmlo("RF_Svalbard", "UNIS Svalbard RF Background Recording (SuperDARN, KHO)");
 
   cmlo.add_options()
-						("a, deviceAddress" , " USRP hardware address; if not defined default address (192.68.10.2) is used", cxxopts::value<std::string>())
-						("l, lowerFrequency" , "Defines lower threshold for recorded band",cxxopts::value<uint64_t>())
-						("u, upperFrequency","Defines upper threshold for recorded band ",cxxopts::value<uint64_t>())
-						("g, gain", "Defines USRP Rx gain",cxxopts::value<int8_t>())
-						;
+						    ("a, deviceAddress" , " USRP hardware address; if not defined default address (192.68.10.2) is used", cxxopts::value<std::string>())
+						    ("l, lowerFrequency" , "Defines lower threshold for recorded band",cxxopts::value<uint64_t>())
+						    ("u, upperFrequency","Defines upper threshold for recorded band ",cxxopts::value<uint64_t>())
+						    ("g, gain", "Defines USRP Rx gain",cxxopts::value<int8_t>())
+						    ;
 
 
   auto result = cmlo.parse(argc, argv);
@@ -225,20 +225,21 @@ int main(int argc, char * argv[])
 
 	  dft_wrapper->ComputeNoiseDFT();
 
-	  /*TODO: test & verify*/
+
 	  nsh->GetDFTData(dft_wrapper->ExportDFTResults());
 
 
+	  /* Gets Power from DFT samples (+ SUMMING POWER VALUES in Buffer for subsequent averaging)*/
+	  nsh->ConvertDFTData();
 
-	  /*TODO: INVESTIGATE (Careful with BIGGER OR EQUALITY)!!!!!!*/
+
+
+	  /*TODO: INVESTIGATE CONDITION -> Equality should be sufficient -> Replace eventually*/
 	  if((ext_num_INT_recv_RF_samps) >= (DEF_INTEGRATION_CONST * ext_sample_rate))
 	    {
 
 	      /*Computes Average*/
-	      nsh->IntegrateDFT();
-
-	      /*Converts DFT data: complex->magNitude*/
-	      nsh->ConvertDFTData();
+	      nsh->IntegratePWR();
 
 	      /*Exports Spectrum Data to file*/
 	      nsh->ExportRawDataToFile();

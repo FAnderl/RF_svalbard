@@ -12,7 +12,7 @@ cmake_minimum_required(VERSION 2.8)
 # probably need some special care!)
 # Set this to ON in order to link a static build of UHD:
 option(UHD_USE_STATIC_LIBS OFF)
-set(UHD_USE_STATIC_LIBS OFF)
+set(UHD_USE_STATIC_LIBS ON)
 
 
 message(STATUS "(1)Status of variable: " ${UHD_USE_STATIC_LIBS})
@@ -108,6 +108,7 @@ else(NOT UHD_USE_STATIC_LIBS)
         # Custom Linking options added by Florian Anderl (UNIS)
 		libm.a 
 		libfftw3.a 
+		gnuradio-fft
 
 
 		

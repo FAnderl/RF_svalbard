@@ -25,7 +25,7 @@ const uint64_t DEF_L_FREQ = 8000000;
 const uint64_t DEF_U_FREQ = 20000000;
 const uint64_t DEF_SAMP_RATE = 12500000;
 const int8_t DEF_GAIN = 0;
-const uint64_t DEF_INTEGRATION_CONST  = 3;
+const double DEF_INTEGRATION_CONST  = 3;
 
 
 

@@ -38,7 +38,7 @@ public:
 
   int ConvertDFTData();
 
-  int IntegrateDFT();
+  int IntegratePWR();
 
   int GetDFTData(fftw_complex* DFTsamples);
 
@@ -60,7 +60,7 @@ private:
 
 
   /*Integration buffer*/
-  fftw_complex* integration_DFT_buffer;
+  double* integration_PWR_buffer;
 
 
   /*Magnitues of samples from nsh_DFT_samples*/
