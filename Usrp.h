@@ -65,6 +65,8 @@ private:
   int8_t gain;                 /*Gain in dB of Rx chain*/
 
 
+  RFmode usrp_mode;
+
 
   /*Data Acquisition*/
 

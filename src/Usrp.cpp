@@ -23,8 +23,10 @@ Usrp::Usrp(): usrp_address(const_usrp_addr),center_frequency(DEF_CENT_FREQ), low
     upper_frequency(DEF_U_FREQ),sample_rate_desired(DEF_SAMP_RATE), gain(DEF_GAIN)
 {
 
+  usrp_mode = RFmode::standard_band;
+
   /*For Debugging ONLY*/
-  puts("USRP Default Constructor");
+  //puts("USRP Default Constructor");
 
 
   ext_lower_frequency = lower_frequency;
@@ -46,6 +48,9 @@ Usrp::Usrp(std::string usrp_addr, uint64_t l_freq, uint64_t u_freq , int8_t Gain
     upper_frequency(u_freq), gain(Gain)
 {
 
+
+  usrp_mode = RFmode::alternative_band;
+
   center_frequency = 0;
 
   sample_rate_desired = 0;
@@ -62,41 +67,56 @@ Usrp::Usrp(std::string usrp_addr, uint64_t l_freq, uint64_t u_freq , int8_t Gain
 int Usrp::UsrpCalculateParameters()
 {
 
-
-  /*Calculate usrp center frequency from cmd-defined parameters*/
-  center_frequency = lower_frequency + (upper_frequency - lower_frequency)/2;
-
-  /*Calculate usrp center frequency from cmd-defined parameters
-   * TODO: rework -> fixed set of possible sample rates*/
-  sample_rate_desired = (upper_frequency - lower_frequency) + 0.1 *(upper_frequency - lower_frequency) ; /*+ 10% of spectral distance -> (sufficient?) */
-
-  /*Initializes local assist variable -> TODO: maybe replace with class member variable*/
-  uint32_t temp_freq_res_desired = DEF_FREQ_RES;
-
-  /*TODO: Test!*/
-  /* Increments samples rate until even decimation rate requirement is satisfied
-   * ONLY BETTER SAMPLES RATES ALLOWED*/
-  do
+  if(usrp_mode == RFmode::alternative_band)
     {
-      if(std::fmod((double(DEF_ADC_RATE)/double(sample_rate_desired)),2) == 0){break;}
-      sample_rate_desired = sample_rate_desired + 1;
-    }while(std::fmod((double(DEF_ADC_RATE)/double(sample_rate_desired)),2) != 0);
+
+      /*Calculate usrp center frequency from cmd-defined parameters*/
+      center_frequency = lower_frequency + (upper_frequency - lower_frequency)/2;
+
+      /*Calculate usrp center frequency from cmd-defined parameters
+       * TODO: rework -> fixed set of possible sample rates*/
+      sample_rate_desired = (upper_frequency - lower_frequency) + 0.05 *(upper_frequency - lower_frequency) ; /*+ 5% of spectral distance -> (sufficient?) */
+
+      /*Initializes local assist variable -> TODO: maybe replace with class member variable*/
+      uint32_t temp_freq_res_desired = DEF_FREQ_RES;
+
+      /*TODO: Test!*/
+      /* Increments samples rate until even decimation rate requirement is satisfied
+       * ONLY BETTER SAMPLES RATES ALLOWED*/
+      do
+	{
+	  if(std::fmod((double(DEF_ADC_RATE)/double(sample_rate_desired)),2) == 0){break;}
+	  sample_rate_desired = sample_rate_desired + 1;
+	}while(std::fmod((double(DEF_ADC_RATE)/double(sample_rate_desired)),2) != 0);
 
 
 
-  while((sample_rate_desired/temp_freq_res_desired)%1 != 0)
-    {
-      temp_freq_res_desired  = temp_freq_res_desired - 1;
+      while((sample_rate_desired/temp_freq_res_desired)%1 != 0)
+	{
+	  temp_freq_res_desired  = temp_freq_res_desired - 1;
+	}
+
+
+      /*SETS FFT BINSIZE -> EXTREMELY IMPORTANT*/
+      ext_fft_resolution = sample_rate_desired/temp_freq_res_desired;
+
+      std::cout << "FFT BINSIZE: " << ext_fft_resolution << std::endl;
+
     }
 
 
-  /*SETS FFT BINSIZE -> EXTREMELY IMPORTANT*/
-  ext_fft_resolution = sample_rate_desired/temp_freq_res_desired;
+  else if(usrp_mode == RFmode::standard_band)
+    {
+      sample_rate_desired = DEF_SAMP_RATE;
 
-  std::cout << "FFT BINSIZE: " << ext_fft_resolution << std::endl;
+      ext_fft_resolution = DEF_FFT_BINSIZE;
 
 
-  return 0;
+    }
+
+
+
+return 0;
 }
 
 
@@ -224,10 +244,10 @@ std::complex<double>* Usrp::UsrpRFDataAcquisition()
       num_rx_samples = rx_stream->recv(&buffs.front(), buffs.size(), md, 1);
 
       /*For DEBUGGING ONLY*/
-//            for(int i = 0; i< buffs.size(); i++)
-//      	{
-//      	  std::cout << buffs[i] << ",";
-//      	}
+      //            for(int i = 0; i< buffs.size(); i++)
+      //      	{
+      //      	  std::cout << buffs[i] << ",";
+      //      	}
 
       if(num_rx_samples != buffs.size()){continue;}
 
