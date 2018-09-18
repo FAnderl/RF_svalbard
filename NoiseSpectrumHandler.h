@@ -36,6 +36,8 @@ public:
 
   int FileConfig(time_t start_time);
 
+  int RearrangeDFT();
+
   int ConvertDFTData();
 
   int IntegratePWR();

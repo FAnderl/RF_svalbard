@@ -27,6 +27,9 @@ const uint64_t DEF_SAMP_RATE = 12500000;
 const int8_t DEF_GAIN = 0;
 const double DEF_INTEGRATION_CONST  = 3;
 
+const uint32_t DEF_ADC_RATE = 100000000;
+const uint32_t DEF_FREQ_RES = 10000; /* minimum 10 kHz ferquency resolution */
+
 
 
 /*-----------------------SIGNAL PROCESSING CONSTANTS----------------------------------------*/
@@ -37,13 +40,13 @@ const int32_t DEF_FFT_BINSIZE = 1250 ;
 
 /*File Constant defines when a new file for data storage will be create
 DEFINITION: time of file coverage in seconds*/
-const int32_t DEF_FILE_CONSTANT =  7200;
+const int32_t DEF_FILE_CONSTANT =  60;
 
 
 /*Default values for default Usrp constructor*/
 const std::string const_usrp_addr = "192.168.10.2";
 const std::string const_clock_src = "internal";
-const std::string const_subdev = "A:A"; /*For LFRX daughterboard using RXA*/
+const std::string const_subdev = "A:A"; /*For LFRX daughterboard using RXA -> TODO: Verify*/
 
 
 typedef enum RFmode {

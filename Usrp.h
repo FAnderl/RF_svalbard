@@ -37,9 +37,14 @@ public:
 
   Usrp(std::string usrp_addr, uint64_t l_freq, uint64_t u_freq, int8_t gain);
 
+  int UsrpCalculateParameters();
+
+  int UsrpPrepareSampleBuffer();
+
   int UsrpConfig();
 
   int UsrpStartUp();
+
 
   std::complex<double> * UsrpRFDataAcquisition();
 
@@ -55,7 +60,7 @@ private:
   uint64_t lower_frequency;
   uint64_t upper_frequency;
 
-  uint64_t sample_rate;          /* target sample_rate that is sent to the PC from the FPGA, NB! Nyquist -> sample_rate determines the highest reproducible frequency*/
+  uint64_t sample_rate_desired;          /* target sample_rate that is sent to the PC from the FPGA, NB! Nyquist -> sample_rate determines the highest reproducible frequency*/
 
   int8_t gain;                 /*Gain in dB of Rx chain*/
 

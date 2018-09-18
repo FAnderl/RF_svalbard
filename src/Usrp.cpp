@@ -17,24 +17,24 @@ uint64_t ext_sample_rate;
 uint64_t ext_lower_frequency;
 uint64_t ext_upper_frequency;
 
+uint32_t ext_fft_resolution; /*strongly coupled with other parameters*/
+
 Usrp::Usrp(): usrp_address(const_usrp_addr),center_frequency(DEF_CENT_FREQ), lower_frequency(DEF_L_FREQ),
-    upper_frequency(DEF_U_FREQ),sample_rate(DEF_SAMP_RATE), gain(DEF_GAIN)
+    upper_frequency(DEF_U_FREQ),sample_rate_desired(DEF_SAMP_RATE), gain(DEF_GAIN)
 {
 
-  /*Allocates memory for received data samples*/
-  buffs.resize(DEF_FFT_BINSIZE);
+  /*For Debugging ONLY*/
+  puts("USRP Default Constructor");
 
-  ext_sample_rate = uint64_t(DEF_SAMP_RATE);
 
-  ext_lower_frequency = uint64_t(DEF_L_FREQ);
+  ext_lower_frequency = lower_frequency;
 
-  ext_upper_frequency = uint64_t(DEF_U_FREQ);
-
-  puts("USRP Constructor");
+  ext_upper_frequency = upper_frequency;
 
 }
 
 
+/*Stops Streaming from USRP Device*/
 Usrp::~Usrp()
 {
   buffs.clear();
@@ -46,26 +46,78 @@ Usrp::Usrp(std::string usrp_addr, uint64_t l_freq, uint64_t u_freq , int8_t Gain
     upper_frequency(u_freq), gain(Gain)
 {
 
-  /*Allocates memory for received data samples*/
-  buffs.resize(DEF_FFT_BINSIZE);
+  center_frequency = 0;
 
-  /*Calculate usrp center frequency from cmd-defined parameters*/
-  center_frequency = lower_frequency + (upper_frequency - lower_frequency)/2;
-
-  /*Calculate usrp center frequency from cmd-defined parameters
-   * TODO: rework -> fixed set of possible sample rates*/
-  sample_rate = upper_frequency - lower_frequency + 0.05*(upper_frequency - lower_frequency); /*TODO: 5 percent overhead*/
-
+  sample_rate_desired = 0;
 
   ext_lower_frequency = lower_frequency;
 
   ext_upper_frequency = upper_frequency;
 
 
-  puts("USRP Constructor");
-
-
 }
+
+
+/*Calculates Valid Signal Processing/device parameters*/
+int Usrp::UsrpCalculateParameters()
+{
+
+
+  /*Calculate usrp center frequency from cmd-defined parameters*/
+  center_frequency = lower_frequency + (upper_frequency - lower_frequency)/2;
+
+  /*Calculate usrp center frequency from cmd-defined parameters
+   * TODO: rework -> fixed set of possible sample rates*/
+  sample_rate_desired = (upper_frequency - lower_frequency) + 0.1 *(upper_frequency - lower_frequency) ; /*+ 10% of spectral distance -> (sufficient?) */
+
+  /*Initializes local assist variable -> TODO: maybe replace with class member variable*/
+  uint32_t temp_freq_res_desired = DEF_FREQ_RES;
+
+  /*TODO: Test!*/
+  /* Increments samples rate until even decimation rate requirement is satisfied
+   * ONLY BETTER SAMPLES RATES ALLOWED*/
+  do
+    {
+      if(std::fmod((double(DEF_ADC_RATE)/double(sample_rate_desired)),2) == 0){break;}
+      sample_rate_desired = sample_rate_desired + 1;
+    }while(std::fmod((double(DEF_ADC_RATE)/double(sample_rate_desired)),2) != 0);
+
+
+
+  while((sample_rate_desired/temp_freq_res_desired)%1 != 0)
+    {
+      temp_freq_res_desired  = temp_freq_res_desired - 1;
+    }
+
+
+  /*SETS FFT BINSIZE -> EXTREMELY IMPORTANT*/
+  ext_fft_resolution = sample_rate_desired/temp_freq_res_desired;
+
+  std::cout << "FFT BINSIZE: " << ext_fft_resolution << std::endl;
+
+
+  return 0;
+}
+
+
+
+
+
+/*Allocates Memory according to given parameters
+ * REASONING: */
+int Usrp::UsrpPrepareSampleBuffer()
+{
+
+
+
+  /*Allocates memory for received data samples*/
+  buffs.resize(ext_fft_resolution);
+
+
+
+  return 0;
+}
+
 
 
 /*Configures the USRP for Receving*/
@@ -91,14 +143,13 @@ int Usrp::UsrpConfig()
 
 
   /*Sample Rate*/
-  usrp_intern->set_rx_rate(sample_rate);  /*sets Rx sample rate*/
+  usrp_intern->set_rx_rate(sample_rate_desired);  /*sets Rx sample rate*/
 
-  sample_rate = usrp_intern->get_rx_rate();
 
-  ext_sample_rate = sample_rate;
+  /*Should be same as sample_rate_desired, TODO: TEST*/
+  ext_sample_rate = usrp_intern->get_rx_rate();
 
-  std::cout << "Rx Sample Rate set to:  " << sample_rate << std::endl;
-
+  std::cout << "I/Q Sampling Rate set to: " << ext_sample_rate << std::endl;
 
 
 
@@ -107,13 +158,14 @@ int Usrp::UsrpConfig()
 
   usrp_intern->set_rx_freq(tune_request);
 
+
   std::cout << "Rx Center Frequency set to:  " << usrp_intern->get_rx_freq() << std::endl;
 
 
   /*Gain TODO: Fix && Uncomment*/
-//  usrp_intern->set_rx_gain(gain);
-//
-//  std::cout << "Rx Gain set to: " << usrp_intern->get_rx_gain() << std::endl;
+  //  usrp_intern->set_rx_gain(gain);
+  //
+  //  std::cout << "Rx Gain set to: " << usrp_intern->get_rx_gain() << std::endl;
 
 
   /*Antenna*/
@@ -172,19 +224,19 @@ std::complex<double>* Usrp::UsrpRFDataAcquisition()
       num_rx_samples = rx_stream->recv(&buffs.front(), buffs.size(), md, 1);
 
       /*For DEBUGGING ONLY*/
-//      for(int i = 0; i< buffs.size(); i++)
-//	{
-//	  std::cout << buffs[i] << ",";
-//	}
+//            for(int i = 0; i< buffs.size(); i++)
+//      	{
+//      	  std::cout << buffs[i] << ",";
+//      	}
 
       if(num_rx_samples != buffs.size()){continue;}
 
 
-  }while(num_rx_samples != DEF_FFT_BINSIZE);
+  }while(num_rx_samples != ext_fft_resolution);
 
 
 
-  if (num_rx_samples != DEF_FFT_BINSIZE)
+  if (num_rx_samples != ext_fft_resolution)
     {
       std::cout << "CRITICAL ERROR: FALSE NUMBER OF SAMPLES... ABORT" <<std::endl;
       exit(-1);

@@ -39,11 +39,12 @@ int main(int argc, char * argv[])
   cxxopts::Options cmlo("RF_Svalbard", "UNIS Svalbard RF Background Recording (SuperDARN, KHO)");
 
   cmlo.add_options()
-						    ("a, deviceAddress" , " USRP hardware address; if not defined default address (192.68.10.2) is used", cxxopts::value<std::string>())
-						    ("l, lowerFrequency" , "Defines lower threshold for recorded band",cxxopts::value<uint64_t>())
-						    ("u, upperFrequency","Defines upper threshold for recorded band ",cxxopts::value<uint64_t>())
-						    ("g, gain", "Defines USRP Rx gain",cxxopts::value<int8_t>())
-						    ;
+	("a, deviceAddress" , " USRP hardware address; if not defined default address (192.68.10.2) is used", cxxopts::value<std::string>())
+	("l, lowerFrequency" , "Defines lower threshold for recorded band",cxxopts::value<uint64_t>())
+	("u, upperFrequency","Defines upper threshold for recorded band ",cxxopts::value<uint64_t>())
+	("g, gain", "Defines USRP Rx gain",cxxopts::value<int8_t>())
+	;
+
 
 
   auto result = cmlo.parse(argc, argv);
@@ -151,6 +152,16 @@ int main(int argc, char * argv[])
 
   /*-------------------------------------- STANDARD PROCEDURE -----------------------------------------------*/
 
+
+  /*NEW*/
+  usrp_wrapper->UsrpCalculateParameters();
+
+  /*NEW*/
+  usrp_wrapper->UsrpPrepareSampleBuffer();
+
+
+
+
   /*Sets USRP device parameters*/
   int conf_succ = usrp_wrapper->UsrpConfig();
 
@@ -175,11 +186,13 @@ int main(int argc, char * argv[])
   /*Initializes Receiver*/
   usrp_wrapper->UsrpStartUp();
 
-  /*Temporary POINTER to Container of RF samples for hand-over to DFT*/
+  /*Temporary POINTER to Container of RF samples for hand-over to DFT-wrapper instance*/
   std::complex<double> * temp_buff_rf;
 
 
+
   /*-------------------------RECEIVING SAMPLES & DATA PROCESSING -----------------------------*/
+
 
   while(true)
     {
@@ -189,7 +202,7 @@ int main(int argc, char * argv[])
 
       /*checks wether number of samples exceeds hard-coded threshold
        * -> if yes, new output file is created*/
-      if(ext_num_FILE_recv_RF_samps > (DEF_SAMP_RATE * DEF_FILE_CONSTANT))
+      if(ext_num_FILE_recv_RF_samps > (ext_sample_rate * DEF_FILE_CONSTANT))
 	{
 	  /*reset ext_num_FILE_recv_RF_samps*/
 	  ext_num_FILE_recv_RF_samps = 0;
@@ -203,7 +216,7 @@ int main(int argc, char * argv[])
 
 
       /*Reset INTEGRATION variable every 60 seconds*/
-      if(ext_num_INT_recv_RF_samps == (DEF_SAMP_RATE*60))
+      if(ext_num_INT_recv_RF_samps == (ext_sample_rate*60))
 	{
 	  ext_num_INT_recv_RF_samps = 0;
 	}
@@ -227,6 +240,9 @@ int main(int argc, char * argv[])
 
 
 	  nsh->GetDFTData(dft_wrapper->ExportDFTResults());
+
+
+	  nsh->RearrangeDFT();
 
 
 	  /* Gets Power from DFT samples (+ SUMMING POWER VALUES in Buffer for subsequent averaging)*/
