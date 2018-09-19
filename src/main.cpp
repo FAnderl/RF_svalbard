@@ -258,6 +258,7 @@ int main(int argc, char * argv[])
 	      /*Exports Spectrum Data to file*/
 	      nsh->ExportRawDataToFile();
 
+
 	      nsh->ResetIntegrationBuffer();
 
 	    }

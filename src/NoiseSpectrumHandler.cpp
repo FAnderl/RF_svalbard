@@ -30,7 +30,7 @@ NoiseSpectrumHandler::NoiseSpectrumHandler () : nsh_DFT_samples(NULL), nsh_pwr_D
 NoiseSpectrumHandler::~NoiseSpectrumHandler ()
 {
 
-  delete integration_PWR_buffer;
+  delete []integration_PWR_buffer;
   f_noise_spectrum.close();
 
 }
@@ -192,7 +192,7 @@ int NoiseSpectrumHandler::GetDFTData(fftw_complex *DFTsamples)
 int NoiseSpectrumHandler::ResetIntegrationBuffer()
 {
 
-  /*Re-0 initilaization of integration_PWR_buffer TODO: put in own function*/
+  /*Re-0 initilization of integration_PWR_buffer*/
   for(int i = 0; i< ext_fft_resolution; i++)
     {
       integration_PWR_buffer[i] = 0;
@@ -224,6 +224,6 @@ int NoiseSpectrumHandler::ExportRawDataToFile()
   /*new line for new DEF_FFT_SIZE samples*/
   f_noise_spectrum << "\n";
 
-
+return 0;
 
 }
