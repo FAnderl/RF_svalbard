@@ -35,12 +35,14 @@ int main(int argc, char * argv[])
   cxxopts::Options cmlo("RF_Svalbard", "UNIS Svalbard RF Background Recording (SuperDARN, KHO)");
 
   cmlo.add_options()
-	    ("a, deviceAddress" , " USRP hardware address; if not defined default address (192.68.10.2) is used", cxxopts::value<std::string>())
-	    ("l, lowerFrequency" , "Defines lower threshold for recorded band",cxxopts::value<uint64_t>())
-	    ("u, upperFrequency","Defines upper threshold for recorded band ",cxxopts::value<uint64_t>())
-	    ("g, gain", "Defines USRP Rx gain",cxxopts::value<int8_t>())
-	    ("d, Debug", "If set on true, Debug mode is active enabling additional console output")
-	    ;
+			("a, deviceAddress" , " USRP hardware address; if not defined default address (192.68.10.2) is used", cxxopts::value<std::string>())
+			("l, lowerFrequency" , "Defines lower threshold for recorded band",cxxopts::value<uint64_t>())
+			("u, upperFrequency","Defines upper threshold for recorded band ",cxxopts::value<uint64_t>())
+			("g, gain", "Defines USRP Rx gain",cxxopts::value<int8_t>())
+			("w, windowing", "If set to true, Blackmann window is applied prior to DFT")
+			("inorder", "If set to true, the DFT is stored in order and NOT DC-centered")
+			("d, Debug", "If set on true, Debug mode is active enabling additional console output")
+			;
 
 
 
@@ -213,7 +215,7 @@ int main(int argc, char * argv[])
 	}
 
 
-      /*Reset INTEGRATION variable every 60 seconds*/
+      /*RESET INTEGRATION VARIABLE EVERY 60 SECONDS*/
       if(ext_num_INT_recv_RF_samps == (ext_sample_rate*60))
 	{
 	  ext_num_INT_recv_RF_samps = 0;
@@ -230,8 +232,10 @@ int main(int argc, char * argv[])
 	  dft_wrapper->GetRFSamples(temp_buff_rf);
 
 
-	  /*Applies window function in TIME DOMAIN*/
-	  //dft_wrapper->Windowing(); /*TODO: Preliminarily commented out*/
+	  /*Applies window function in TIME DOMAIN
+	   * -> TODO: Consider applying Windowing in Default Mode*/
+	  if(result["w"].as<bool>())
+	    dft_wrapper->Windowing();
 
 
 	  dft_wrapper->ComputeNoiseDFT();
@@ -239,8 +243,20 @@ int main(int argc, char * argv[])
 
 	  nsh->GetDFTData(dft_wrapper->ExportDFTResults());
 
+	  /*CONDITION: If inorder-flag is NOT set, the
+	   * DFT is stored DC-centered*/
+	  if(!(result["inorder"].as<bool>()))
+	    {
+	      std::cout << "\n********************************\nINFO: DFT results are stored DC-centerered"
+		  "************************************\n" << std::endl;
+	      nsh->RearrangeDFT();
+	    }
 
-	  nsh->RearrangeDFT();
+	  else
+	    {
+	      std::cout << "\n********************************\nINFO: DFT results are stored IN-ORDER"
+		  "************************************\n" << std::endl;
+	    }
 
 
 	  /* Gets Power from DFT samples (+ SUMMING POWER VALUES in Buffer for subsequent averaging)*/

@@ -19,7 +19,7 @@ NoiseSpectrumHandler::NoiseSpectrumHandler () : nsh_DFT_samples(NULL), nsh_pwr_D
 
   integration_PWR_buffer = new double[ext_fft_resolution];
 
-  for(int i = 0; i< ext_fft_resolution; i++)
+  for(int i = 0; i < ext_fft_resolution; i++)
     {
       integration_PWR_buffer[i] = 0;
     }
@@ -31,6 +31,8 @@ NoiseSpectrumHandler::~NoiseSpectrumHandler ()
 {
 
   delete []integration_PWR_buffer;
+  delete []nsh_pwr_DFT_samples;
+  fftw_free(nsh_DFT_samples);
   f_noise_spectrum.close();
 
 }
@@ -46,7 +48,7 @@ NoiseSpectrumHandler::NoiseSpectrumHandler(RFmode rf_m) : nsh_DFT_samples(NULL),
 
   integration_PWR_buffer = new double[ext_fft_resolution];
 
-  for(int i = 0; i< ext_fft_resolution; i++)
+  for(int i = 0; i < ext_fft_resolution; i++)
     {
       integration_PWR_buffer[i] = 0;
     }
@@ -128,7 +130,7 @@ int NoiseSpectrumHandler::RearrangeDFT()
     }
 
 
-
+  delete []temp_DFT;
 
   return 0;
 }
@@ -219,9 +221,7 @@ int NoiseSpectrumHandler::ExportRawDataToFile()
     }
 
 
-
-
-  /*new line for new DEF_FFT_SIZE samples*/
+  /*NEW LINE FOR NEW DEF_FFT_SIZE SAMPLES*/
   f_noise_spectrum << "\n";
 
 return 0;

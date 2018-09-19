@@ -136,13 +136,8 @@ int Usrp::UsrpCalculateParameters()
  * REASONING: */
 int Usrp::UsrpPrepareSampleBuffer()
 {
-
-
-
   /*Allocates memory for received data samples*/
   buffs.resize(ext_fft_resolution);
-
-
 
   return 0;
 }
