@@ -82,7 +82,8 @@ int Usrp::UsrpCalculateParameters()
 
       /*TODO: Test!*/
       /* Increments samples rate until even decimation rate requirement is satisfied
-       * ONLY BETTER SAMPLES RATES ALLOWED*/
+       * ONLY BETTER SAMPLES RATES ALLOWED
+       * -> TODO: Rework architecture of this do.. while.. loop*/
       do
 	{
 	  if(std::fmod((double(DEF_ADC_RATE)/double(sample_rate_desired)),2) == 0){break;}
@@ -90,17 +91,21 @@ int Usrp::UsrpCalculateParameters()
 	}while(std::fmod((double(DEF_ADC_RATE)/double(sample_rate_desired)),2) != 0);
 
 
-
-      while((sample_rate_desired/temp_freq_res_desired)%1 != 0)
+      /*ALLOWS ONLY INTEGER FFT BINSIZES (number of fft bins)
+       * TODO: TEST! */
+      while(std::fmod((double(sample_rate_desired)/double(temp_freq_res_desired)),1) != 0)
 	{
 	  temp_freq_res_desired  = temp_freq_res_desired - 1;
 	}
 
 
+      std::cout << "Frequency Resolution of DFT Output: " << temp_freq_res_desired << std::endl;
+
+
       /*SETS FFT BINSIZE -> EXTREMELY IMPORTANT*/
       ext_fft_resolution = sample_rate_desired/temp_freq_res_desired;
 
-      std::cout << "FFT BINSIZE: " << ext_fft_resolution << std::endl;
+
 
     }
 
@@ -112,11 +117,15 @@ int Usrp::UsrpCalculateParameters()
       ext_fft_resolution = DEF_FFT_BINSIZE;
 
 
+
     }
 
 
+  if(_debug_mode)
+    std::cout << "FFT Binsize set to: " << ext_fft_resolution << std::endl;
 
-return 0;
+
+  return 0;
 }
 
 
@@ -243,11 +252,6 @@ std::complex<double>* Usrp::UsrpRFDataAcquisition()
       /*recv timeout currently set to 1 second*/
       num_rx_samples = rx_stream->recv(&buffs.front(), buffs.size(), md, 1);
 
-      /*For DEBUGGING ONLY*/
-      //            for(int i = 0; i< buffs.size(); i++)
-      //      	{
-      //      	  std::cout << buffs[i] << ",";
-      //      	}
 
       if(num_rx_samples != buffs.size()){continue;}
 

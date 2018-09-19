@@ -68,4 +68,7 @@ extern uint32_t ext_fft_resolution; /*strongly coupled with other parameters*/
 extern std::string ext_dev_addr;
 
 
+
+extern bool _debug_mode;
+
 #endif /* DEFINES_H_ */

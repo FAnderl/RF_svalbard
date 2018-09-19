@@ -30,6 +30,7 @@ NoiseSpectrumHandler::NoiseSpectrumHandler () : nsh_DFT_samples(NULL), nsh_pwr_D
 NoiseSpectrumHandler::~NoiseSpectrumHandler ()
 {
 
+  delete integration_PWR_buffer;
   f_noise_spectrum.close();
 
 }
@@ -185,6 +186,22 @@ int NoiseSpectrumHandler::GetDFTData(fftw_complex *DFTsamples)
 }
 
 
+/*Resets POWER Integration Buffer after values were written to file
+ * -> Note that this function should be called after ExportDataToFile() */
+
+int NoiseSpectrumHandler::ResetIntegrationBuffer()
+{
+
+  /*Re-0 initilaization of integration_PWR_buffer TODO: put in own function*/
+  for(int i = 0; i< ext_fft_resolution; i++)
+    {
+      integration_PWR_buffer[i] = 0;
+    }
+
+
+  return 0;
+}
+
 
 int NoiseSpectrumHandler::ExportRawDataToFile()
 {
@@ -208,17 +225,5 @@ int NoiseSpectrumHandler::ExportRawDataToFile()
   f_noise_spectrum << "\n";
 
 
-  f_noise_spectrum.flush();
 
-
-  /*Deletion & Re-Initialization of integration buffer*/
-  delete integration_PWR_buffer;
-
-  integration_PWR_buffer = new double[ext_fft_resolution];
-
-  for(int i = 0; i< ext_fft_resolution; i++)
-    {
-      integration_PWR_buffer[i] = 0;
-    }
-  return 0;
 }

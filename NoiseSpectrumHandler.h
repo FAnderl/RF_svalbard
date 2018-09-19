@@ -44,6 +44,8 @@ public:
 
   int GetDFTData(fftw_complex* DFTsamples);
 
+  int ResetIntegrationBuffer();
+
   int ExportRawDataToFile();
 
 private:
@@ -66,7 +68,7 @@ private:
 
 
   /*Magnitues of samples from nsh_DFT_samples*/
-  double* nsh_pwr_DFT_samples;
+  double* nsh_pwr_DFT_samples;			/*TODO: Depreacted -> REMOVE*/
 
 };
 

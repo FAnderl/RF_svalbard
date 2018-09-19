@@ -20,6 +20,8 @@
 uint64_t ext_num_FILE_recv_RF_samps;
 uint64_t ext_num_INT_recv_RF_samps;
 std::string ext_dev_addr;
+bool _debug_mode;
+
 
 
 
@@ -28,22 +30,17 @@ std::string ext_dev_addr;
 int main(int argc, char * argv[])
 {
 
-  /*temporary container for argc; required because cmlos.parse() overwrites argc (see below)*/
-  int ARGC_T = argc;
-
-
-
-
   /*Command Line Parser*/
 
   cxxopts::Options cmlo("RF_Svalbard", "UNIS Svalbard RF Background Recording (SuperDARN, KHO)");
 
   cmlo.add_options()
-	("a, deviceAddress" , " USRP hardware address; if not defined default address (192.68.10.2) is used", cxxopts::value<std::string>())
-	("l, lowerFrequency" , "Defines lower threshold for recorded band",cxxopts::value<uint64_t>())
-	("u, upperFrequency","Defines upper threshold for recorded band ",cxxopts::value<uint64_t>())
-	("g, gain", "Defines USRP Rx gain",cxxopts::value<int8_t>())
-	;
+	    ("a, deviceAddress" , " USRP hardware address; if not defined default address (192.68.10.2) is used", cxxopts::value<std::string>())
+	    ("l, lowerFrequency" , "Defines lower threshold for recorded band",cxxopts::value<uint64_t>())
+	    ("u, upperFrequency","Defines upper threshold for recorded band ",cxxopts::value<uint64_t>())
+	    ("g, gain", "Defines USRP Rx gain",cxxopts::value<int8_t>())
+	    ("d, Debug", "If set on true, Debug mode is active enabling additional console output")
+	    ;
 
 
 
@@ -66,6 +63,15 @@ int main(int argc, char * argv[])
   RFmode activeRF_mode;
 
 
+  if(result["d"].as<bool>())
+    {
+      _debug_mode = true;
+    }
+  else
+    {
+      _debug_mode = false;
+    }
+
   /*------------------------- EXECUTION ----------------------------------------------*/
 
 
@@ -73,60 +79,52 @@ int main(int argc, char * argv[])
 
 
   /*----------------CMD ARGUMENT MODE--------------------------------------*/
-  if(ARGC_T > 1)
+  if((result.count("l") == 1) && (result.count("u") == 1))
     {
       activeRF_mode = RFmode::alternative_band;
 
 
-      if((result.count("l") == 1) && (result.count("u") == 1))
+
+
+      if(result.count("a") == 1)
 	{
 
-	  if(result.count("a") == 1)
+	  if(result["g"].count() == 1)
 	    {
-
-	      if(result["g"].count() == 1)
-		{
-		  puts("gain specified");
-		  usrp_wrapper = new Usrp(result["a"].as<std::string>(), result["l"].as<uint64_t>(),
-					  result["u"].as<uint64_t>(), result["g"].as<int8_t>() );
-		}
-
-	      else
-		{
-		  usrp_wrapper = new Usrp(const_usrp_addr, result["l"].as<uint64_t>(),
-					  result["u"].as<uint64_t>(), DEF_GAIN);
-
-		}
+	      puts("gain specified");
+	      usrp_wrapper = new Usrp(result["a"].as<std::string>(), result["l"].as<uint64_t>(),
+				      result["u"].as<uint64_t>(), result["g"].as<int8_t>() );
 	    }
 
 	  else
 	    {
+	      usrp_wrapper = new Usrp(const_usrp_addr, result["l"].as<uint64_t>(),
+				      result["u"].as<uint64_t>(), DEF_GAIN);
 
-
-	      std::cout << "INFO: No USRP address defined -> using default address: 192.168.10.2 ";
-
-	      if(result["g"].count() == 1)
-		{
-		  usrp_wrapper = new Usrp(const_usrp_addr, result["l"].as<uint64_t>(),
-					  result["u"].as<uint64_t>(), result["g"].as<int8_t>() );
-		  puts("gain specified");
-		}
-
-	      else
-		{
-		  usrp_wrapper = new Usrp(const_usrp_addr, result["l"].as<uint64_t>(),
-					  result["u"].as<uint64_t>(), DEF_GAIN);
-
-		}
 	    }
-
 	}
 
       else
 	{
-	  std::cout << "ERROR: Please set frequency parameters" << std::endl;
-	  return 0;
+
+
+	  std::cout << "INFO: No USRP address defined -> using default address: 192.168.10.2 ";
+
+	  if(result["g"].count() == 1)
+	    {
+	      usrp_wrapper = new Usrp(const_usrp_addr, result["l"].as<uint64_t>(),
+				      result["u"].as<uint64_t>(), result["g"].as<int8_t>() );
+	      puts("gain specified");
+	    }
+
+	  else
+	    {
+	      usrp_wrapper = new Usrp(const_usrp_addr, result["l"].as<uint64_t>(),
+				      result["u"].as<uint64_t>(), DEF_GAIN);
+
+	    }
 	}
+
 
     }
 
@@ -259,6 +257,8 @@ int main(int argc, char * argv[])
 
 	      /*Exports Spectrum Data to file*/
 	      nsh->ExportRawDataToFile();
+
+	      nsh->ResetIntegrationBuffer();
 
 	    }
 
