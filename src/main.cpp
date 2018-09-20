@@ -1,12 +1,14 @@
 /*
- * main.cpp
+ *  main.cpp
  *
- *  Created on: Sep 4, 2018
- *      Author: Florian Anderl
+ *
+ *  This file is part of the NoiseMap Svalbard (UNIS) project
+ *
+ *  Created on: Sep 5, 2018
+ *      Author: Florian Anderl (Guest Master Student AGF)
  */
 
-
-#include "../defines.h"
+#include "../Constants.h"
 
 
 /*generic command line parser
@@ -31,39 +33,37 @@ bool XdebugMode;
 int main(int argc, char * argv[])
 {
 
-  /*Command Line Parser*/
+  /*---------------------------------------------Command Line Parser Block--------------------------------*/
 
   cxxopts::Options cmlo("RF_Svalbard", "UNIS Svalbard RF Background Recording (SuperDARN, KHO)");
 
   cmlo.add_options()
-						("a, deviceAddress" , " USRP hardware address; if not defined default address (192.68.10.2) is used", cxxopts::value<std::string>())
-						("l, lowerFrequency" , "Defines lower threshold for recorded band",cxxopts::value<uint64_t>())
-						("u, upperFrequency","Defines upper threshold for recorded band ",cxxopts::value<uint64_t>())
-						("g, gain", "Defines USRP Rx gain",cxxopts::value<int8_t>())
-						("w, windowing", "If set to true, Blackmann window is applied prior to DFT")
-						("inorder", "If set to true, the DFT is stored in order and NOT DC-centered")
-						("d, Debug", "If set on true, Debug mode is active enabling additional console output")
-						;
 
+		    ("a, deviceAddress" , " USRP hardware address; if not defined default address (192.68.10.2) is used", cxxopts::value<std::string>())
+		    ("l, lowerFrequency" , "Defines lower threshold for recorded band",cxxopts::value<uint64_t>())
+		    ("u, upperFrequency","Defines upper threshold for recorded band ",cxxopts::value<uint64_t>())
+		    ("g, gain", "Defines USRP Rx gain",cxxopts::value<int8_t>())
+		    ("w, windowing", "If set to true, Blackmann window is applied prior to DFT")
+		    ("inorder", "If set to true, the DFT is stored in order and NOT DC-centered")
+		    ("d, Debug", "If set on true, Debug mode is active enabling additional console output")
+		    ;
 
 
   auto result = cmlo.parse(argc, argv);
 
 
-  /*Sets threat priority*/
-  //uhd::set_thread_priority_safe();
-
-
-  /*Default initialization of GLOBAL control variable*/
-  XnumRecvSamplesFileTag = 0;
-
-  /*Default initialization of GLOBAL control variable*/
-  XnumRecvSamplesIntegrationTag = 0;
+  uhd::set_thread_priority_safe();  /*Sets threat priority -> Can only be executed properly when in sudo/root mode*/
 
 
 
-  /*Stores active RF mode*/
-  RFmode activeRF_mode;
+  XnumRecvSamplesFileTag = 0;  /*Default initialization of GLOBAL control variable*/
+
+
+  XnumRecvSamplesIntegrationTag = 0;  /*Default initialization of GLOBAL control variable*/
+
+
+
+  RFmode activeRF_mode;  /*Stores active RF mode*/
 
 
   if(result["d"].as<bool>())
@@ -98,7 +98,7 @@ int main(int argc, char * argv[])
   /*------------------------- EXECUTION ----------------------------------------------*/
 
 
-   SdrUsrp *usrp_wrapper = nullptr;
+  SdrUsrp *usrp_wrapper = nullptr;
 
 
   /*----------------CMD ARGUMENT MODE--------------------------------------*/
@@ -116,13 +116,13 @@ int main(int argc, char * argv[])
 	    {
 	      puts("gain specified");
 	      usrp_wrapper = new SdrUsrp(result["a"].as<std::string>(), result["l"].as<uint64_t>(),
-				      result["u"].as<uint64_t>(), result["g"].as<int8_t>() );
+					 result["u"].as<uint64_t>(), result["g"].as<int8_t>() );
 	    }
 
 	  else
 	    {
 	      usrp_wrapper = new SdrUsrp(kConstUsrpAddress, result["l"].as<uint64_t>(),
-				      result["u"].as<uint64_t>(), kDefaultGain);
+					 result["u"].as<uint64_t>(), kDefaultGain);
 
 	    }
 	}
@@ -136,14 +136,14 @@ int main(int argc, char * argv[])
 	  if(result["g"].count() == 1)
 	    {
 	      usrp_wrapper = new SdrUsrp(kConstUsrpAddress, result["l"].as<uint64_t>(),
-				      result["u"].as<uint64_t>(), result["g"].as<int8_t>() );
+					 result["u"].as<uint64_t>(), result["g"].as<int8_t>() );
 	      puts("gain specified");
 	    }
 
 	  else
 	    {
 	      usrp_wrapper = new SdrUsrp(kConstUsrpAddress, result["l"].as<uint64_t>(),
-				      result["u"].as<uint64_t>(), kDefaultGain);
+					 result["u"].as<uint64_t>(), kDefaultGain);
 
 	    }
 	}
@@ -183,69 +183,68 @@ int main(int argc, char * argv[])
 
 
 
-  /*Sets USRP device parameters*/
   int conf_succ = usrp_wrapper->InitializeUSRP();
 
 
-  /*Wrapper Class for DFT Analysis*/
   DiscreteFourierTransformator *dft_wrapper = new DiscreteFourierTransformator();
 
 
-  /*Container Variable storing start_time of */
-  time_t init_start_time = time(NULL);
+  time_t init_start_time = time(NULL);  /* Container Variable storing start_time of for first DataFile*/
 
-  SignalProcessor *nsh = nullptr;
 
-  nsh = new SignalProcessor(activeRF_mode);
+  SignalProcessor *sp = nullptr;
+
+
+  sp = new SignalProcessor(activeRF_mode);
+
 
   /*First Call of InitializeOutFile -> but not the last (see while-loop below)
    * -> new call to InitializeOutFile every 2h
    * -> see loop below */
-  nsh->InitializeOutFile(init_start_time);
+  sp->InitializeOutFile(init_start_time);
 
 
-  /*Initializes Receiver*/
   usrp_wrapper->StartUpUSRP();
+
 
   /*Temporary POINTER to Container of RF samples for hand-over to DFT-wrapper instance*/
   std::complex<double> * temp_buff_rf;
 
 
 
-  /*-------------------------RECEIVING SAMPLES & DATA PROCESSING -----------------------------*/
+  /*------------------------------RECEIVING SAMPLES & DATA PROCESSING ----------------------------------*/
 
 
   while(true)
     {
 
-      /*Issues Receive command to URSP */
-      temp_buff_rf = usrp_wrapper->RFDataAcquisitionUSRP();
 
-      /*checks wether number of samples exceeds hard-coded threshold
-       * -> if yes, new output file is created*/
-      if(XnumRecvSamplesFileTag > (XsampleRate * DEF_FILE_CONSTANT))
+      temp_buff_rf = usrp_wrapper->RFDataAcquisitionUSRP();  /* Issues Receive command to USRP */
+
+      /* Checks wether number of samples exceeds hard-coded threshold
+       * -> if yes, new output file is created */
+      if(XnumRecvSamplesFileTag > (XsampleRate * kFileConstant))
 	{
-	  /*reset XnumRecvSamplesFileTag*/
-	  /*TODO: UPDATE -> 0 -> XnumRecvSamplesFileTag - (XsampleRate * DEF_FILE_CONSTANT) */
-	  XnumRecvSamplesFileTag = XnumRecvSamplesFileTag - (XsampleRate * DEF_FILE_CONSTANT) ;
 
-	  delete nsh;  /*delete current instance of Noise Spectrum Handler*/
+	  XnumRecvSamplesFileTag = XnumRecvSamplesFileTag - (XsampleRate * kFileConstant) ;  /* Resets Global Event Variable to (0+XfftBinNumber) */
 
-	  nsh = new SignalProcessor(activeRF_mode); /*create new instance of Noise Spectrum Handler*/
+	  delete sp;
 
-	  nsh->InitializeOutFile(time(NULL));
+	  sp = new SignalProcessor(activeRF_mode); /* Create new instance of Noise spectrum Handler */
+
+	  sp->InitializeOutFile(time(NULL)); /* Initialize new file with current time tag */
 	}
 
 
       /*RESET INTEGRATION VARIABLE EVERY 60 SECONDS
        * -> CONDITION If number or received samples EXCEEDS 60s-threshold EXACTLY by the number of
-       * acquired samples per cycle (XfftResolution)
-       * -> integration_control flag is reset to XfftResolution
+       * acquired samples per cycle (XfftBinNumber)
+       * -> integration_control flag is reset to XfftBinNumber
        * */
-      if(XnumRecvSamplesIntegrationTag == (XsampleRate * 60) + XfftResolution) /*TODO: UPDATE-> Changed condition (+XfftResolution)*/
+      if(XnumRecvSamplesIntegrationTag == (XsampleRate * 60) + XfftBinNumber) /*TODO: UPDATE-> Changed condition (+XfftBinNumber)*/
 	{
-	  /*UPDATE: 0 -> XfftResolution*/
-	  XnumRecvSamplesIntegrationTag = XfftResolution;
+	  /*UPDATE: 0 -> XfftBinNumber*/
+	  XnumRecvSamplesIntegrationTag = XfftBinNumber;
 	}
 
 
@@ -260,30 +259,32 @@ int main(int argc, char * argv[])
 
 
 	  /*Applies window function in TIME DOMAIN
-	   * -> TODO: Consider applying Windowing in Default Mode*/
+	   * -> TODO: Consider applying Windowing as DEFAULT*/
 	  if(result["w"].as<bool>())
 	    {
 	      dft_wrapper->Windowing();
 	    }
 
+	  /*-------------------------------------DISCRETE FOURIER TRANSFORM------------------------------------------*/
+
 
 	  dft_wrapper->ComputeDFT();
 
 
-	  nsh->GetDFTData(dft_wrapper->ExportDFTResults());
+	  sp->GetDFTData(dft_wrapper->ExportDFTResults());  /* Transfer of data from DFT Class to Signal Processor Class*/
+
 
 	  /*CONDITION: If inorder-flag is NOT set, the
 	   * DFT is stored DC-centered*/
 	  if(!(result["inorder"].as<bool>()))
 	    {
-	      nsh->RearrangeDFT();
+	      sp->RearrangeDFT();
 	    }
 
 
 
 
-	  /* Gets Power from DFT samples (+ SUMMING POWER VALUES in Buffer for subsequent averaging)*/
-	  nsh->ConvertDFTData();
+	  sp->ConvertDFTData();  /* Gets Power from DFT samples (+ SUMMING POWER VALUES in Buffer for subsequent averaging)*/
 
 
 
@@ -294,13 +295,13 @@ int main(int argc, char * argv[])
 	    {
 
 	      /*Computes Average*/
-	      nsh->IntegratePWR();
+	      sp->IntegratePWR();
 
-	      /*Exports Spectrum Data to file*/
-	      nsh->ExportRawDataToFile();
+	      /*Exports spectrum Data to file*/
+	      sp->ExportRawDataToFile();
 
 
-	      nsh->ResetIntegrationBuffer();
+	      sp->ResetIntegrationBuffer();
 
 	    }
 
@@ -310,12 +311,12 @@ int main(int argc, char * argv[])
     }
 
 
-  delete nsh;		/*free memory*/
+  delete sp;		/*free memory*/
   delete dft_wrapper;  /*free memory*/
   delete usrp_wrapper; /*free memory*/
   delete temp_buff_rf; /*free memory*/
 
-  return conf_succ;
+  return 0;
 }
 
 

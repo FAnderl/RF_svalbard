@@ -10,14 +10,14 @@
 
 
 #include "../SdrUsrp.h"
-#include "../defines.h"
+#include "../Constants.h"
 
 /*Declaration of global variables*/
 uint64_t XsampleRate;
 uint64_t XlowerFrequency;
 uint64_t XupperFrequency;
 
-uint32_t XfftResolution; /*strongly coupled with other parameters*/
+uint32_t XfftBinNumber; /*strongly coupled with other parameters*/
 
 SdrUsrp::SdrUsrp(): usrp_address_(kConstUsrpAddress),center_frequency_(kDefaultCenterFrequency), lower_frequency_(kDefaultLowerFrequency),
     upper_frequency_(kDefaultUpperFrequency),sample_rate_desired_(kDefaultSampleRate), gain_(kDefaultGain)
@@ -104,7 +104,7 @@ int SdrUsrp::CalculateParameters()
 
 
       /*SETS FFT BINSIZE -> EXTREMELY IMPORTANT*/
-      XfftResolution = sample_rate_desired_/temp_freq_res_desired;
+      XfftBinNumber = sample_rate_desired_/temp_freq_res_desired;
 
 
 
@@ -115,7 +115,7 @@ int SdrUsrp::CalculateParameters()
     {
       sample_rate_desired_ = kDefaultSampleRate;
 
-      XfftResolution = DEF_FFT_BINSIZE;
+      XfftBinNumber = kDefaultFFTBinNumber;
 
 
 
@@ -123,7 +123,7 @@ int SdrUsrp::CalculateParameters()
 
 
   if(XdebugMode)
-    std::cout << "FFT Binsize set to: " << XfftResolution << std::endl;
+    std::cout << "FFT Binsize set to: " << XfftBinNumber << std::endl;
 
 
   return 0;
@@ -138,7 +138,7 @@ int SdrUsrp::CalculateParameters()
 int SdrUsrp::PrepareSampleBuffer()
 {
   /*Allocates memory for received data samples*/
-  buffs_.resize(XfftResolution);
+  buffs_.resize(XfftBinNumber);
 
   return 0;
 }
@@ -154,7 +154,7 @@ int SdrUsrp::InitializeUSRP()
   /*Creating SdrUsrp Object*/
   usrp_address_ = "addr=" + usrp_address_; /*completes address line for making SdrUsrp object*/
 
-  usrp_address_ =  uhd::usrp::multi_usrp::make(usrp_address_); /*creates internal SdrUsrp object for which generic SdrUsrp class is wrapper*/
+  usrp_intern_ =  uhd::usrp::multi_usrp::make(usrp_address_); /*creates internal SdrUsrp object for which generic SdrUsrp class is wrapper*/
 
 
   /*Clock Source*/
@@ -252,11 +252,11 @@ std::complex<double>* SdrUsrp::RFDataAcquisitionUSRP()
       if(num_rx_samples != buffs_.size()){continue;}
 
 
-  }while(num_rx_samples != XfftResolution);
+  }while(num_rx_samples != XfftBinNumber);
 
 
 
-  if (num_rx_samples != XfftResolution)
+  if (num_rx_samples != XfftBinNumber)
     {
       std::cout << "CRITICAL ERROR: FALSE NUMBER OF SAMPLES... ABORT" <<std::endl;
       exit(-1);

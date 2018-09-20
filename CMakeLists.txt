@@ -72,7 +72,7 @@ message(WARNING "BOOST_LIBRARY_DIRS" ${Boost_LIBRARY_DIRS})
 link_directories(${Boost_LIBRARY_DIRS} /home/unis/UNIS/Software/fftw-3.3.8/build  /usr/lib /usr/local/lib)
 
 ### Make the executable #######################################################
-add_executable(RF_Svalbard ./src/main.cpp ./src/DFTNoise.cpp ./src/NoiseSpectrumHandler.cpp ./src/Usrp.cpp)
+add_executable(RfSvalbard ./src/main.cpp ./src/DFTNoise.cpp ./src/NoiseSpectrumHandler.cpp ./src/Usrp.cpp)
 
 SET(CMAKE_BUILD_TYPE "Release")
 MESSAGE(STATUS "******************************************************************************")

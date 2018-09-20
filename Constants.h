@@ -1,8 +1,11 @@
 /*
- * defines.h
+ *  Constants.h
  *
- *  Created on: Sep 4, 2018
- *      Author: Florian Anderl
+ *
+ *  This file is part of the NoiseMap Svalbard (UNIS) project
+ *
+ *  Created on: Sep 5, 2018
+ *      Author: Florian Anderl (Guest Master Student AGF)
  */
 
 #ifndef CONSTANTS_H_
@@ -14,7 +17,7 @@
 
 
 /*---------------VERSION INFORMATION -----------------------*/
-const std::string version_number = "0.1";
+const std::string version_number = "0.4";
 
 
 
@@ -36,11 +39,11 @@ const uint32_t kDefaultFrequencyResolution = 10000; /* minimum 10 kHz ferquency 
 
 
 /*Defines NUMBER of acquired samples & FFT size -> of course very, very, very important */
-const int32_t DEF_FFT_BINSIZE = 1250 ;
+const int32_t kDefaultFFTBinNumber = 1250 ;
 
 /*File Constant defines when a new file for data storage will be create
 DEFINITION: time of file coverage in seconds*/
-const int32_t DEF_FILE_CONSTANT =  7200;
+const int32_t kFileConstant =  7200;
 
 
 /*Default values for default Usrp constructor*/
@@ -64,7 +67,7 @@ extern uint64_t XlowerFrequency;
 extern uint64_t XupperFrequency;
 extern int8_t XrxGain;
 
-extern uint32_t XfftResolution; /*strongly coupled with other parameters*/
+extern uint32_t XfftBinNumber;  /* Do not confuse with *kDefaultFFTBinNumber */
 extern std::string XdeviceAddress;
 
 

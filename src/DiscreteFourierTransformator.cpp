@@ -15,13 +15,13 @@
 DiscreteFourierTransformator::DiscreteFourierTransformator ()
 {
 
-  input_samples_ = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * XfftResolution);
+  input_samples_ = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * XfftBinNumber);
 
   /*Output memory which  will contain DTF samples in COMPLEX Format*/
-  DFT_samples_ = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * XfftResolution);
+  DFT_samples_ = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * XfftBinNumber);
 
 
-  DFT_plan_ = fftw_plan_dft_1d(XfftResolution, input_samples_, DFT_samples_, FFTW_FORWARD, FFTW_ESTIMATE);
+  DFT_plan_ = fftw_plan_dft_1d(XfftBinNumber, input_samples_, DFT_samples_, FFTW_FORWARD, FFTW_ESTIMATE);
 
 
 }
@@ -38,7 +38,7 @@ DiscreteFourierTransformator::~DiscreteFourierTransformator ()
 int DiscreteFourierTransformator::GetRFSamples(std::complex<double> *addr_rf_samples)
 {
 
-  for(int i = 0; i < XfftResolution; i++)
+  for(int i = 0; i < XfftBinNumber; i++)
     {
       input_samples_[i][0] = addr_rf_samples[i].real() ;   /*Copies Real Part of Sample*/
       input_samples_[i][1] = addr_rf_samples[i].imag() ;   /*Copies Imaginary Part of Sample*/
@@ -53,11 +53,11 @@ int DiscreteFourierTransformator::Windowing()
 {
 
 
-  std::vector<float> blackmann_window = gr::fft::window::blackman(XfftResolution);
+  std::vector<float> blackmann_window = gr::fft::window::blackman(XfftBinNumber);
 
 
   /*Apply blackmann window to TIME DOMAIN input samples*/
-  for(int i = 0; i < XfftResolution; i++)
+  for(int i = 0; i < XfftBinNumber; i++)
     {
       input_samples_[i][0] = input_samples_[i][0] * blackmann_window[i];
       input_samples_[i][1] = input_samples_[i][1] * blackmann_window[i];

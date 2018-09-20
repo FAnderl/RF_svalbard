@@ -14,12 +14,11 @@ SignalProcessor::SignalProcessor () : nsh_DFT_samples_(nullptr)
 {
   /*DEPRECATED: Do never use the default constructor*/
 
-
   active_rf_mode_ = RFmode::standard_band;
 
-  integration_PWR_buffer_ = new double[XfftResolution];
+  integration_PWR_buffer_ = new double[XfftBinNumber];
 
-  for(int i = 0; i < XfftResolution; i++)
+  for(uint i = 0; i < XfftBinNumber; i++)
     {
       integration_PWR_buffer_[i] = 0;
     }
@@ -43,9 +42,9 @@ SignalProcessor::SignalProcessor(RFmode rf_m) : nsh_DFT_samples_(nullptr)
   active_rf_mode_ = rf_m;
 
 
-  integration_PWR_buffer_ = new double[XfftResolution];
+  integration_PWR_buffer_ = new double[XfftBinNumber];
 
-  for(int i = 0; i < XfftResolution; i++)
+  for(uint i = 0; i < XfftBinNumber; i++)
     {
       integration_PWR_buffer_[i] = 0;
     }
@@ -93,7 +92,7 @@ int SignalProcessor::InitializeOutFile(time_t start_time)
 int SignalProcessor::RearrangeDFT()
 {
 
-  fftw_complex * temp_DFT = new fftw_complex[XfftResolution/2];
+  fftw_complex * temp_DFT = new fftw_complex[XfftBinNumber/2];
 
   /*Initialize array*/
 
@@ -105,20 +104,20 @@ int SignalProcessor::RearrangeDFT()
 
 
   /*Temporarily stores second half of DFT samples in buffer*/
-  for(int i = 0; i < XfftResolution/2; i++)
+  for(uint i = 0; i < XfftBinNumber/2; i++)
     {
-      temp_DFT[i][0] = nsh_DFT_samples_[XfftResolution/2 + i][0];
-      temp_DFT[i][1] = nsh_DFT_samples_[XfftResolution/2 + i][1];
+      temp_DFT[i][0] = nsh_DFT_samples_[XfftBinNumber/2 + i][0];
+      temp_DFT[i][1] = nsh_DFT_samples_[XfftBinNumber/2 + i][1];
     }
 
 
 
   /*Realigns DFT samples*/
-  for(int i = 0 ; i < XfftResolution/2; i++)
+  for(uint i = 0 ; i < XfftBinNumber/2; i++)
     {
 
-      nsh_DFT_samples_[i+XfftResolution/2][0] = nsh_DFT_samples_[i][0];
-      nsh_DFT_samples_[i+XfftResolution/2][1] = nsh_DFT_samples_[i][1];
+      nsh_DFT_samples_[i+XfftBinNumber/2][0] = nsh_DFT_samples_[i][0];
+      nsh_DFT_samples_[i+XfftBinNumber/2][1] = nsh_DFT_samples_[i][1];
 
 
       nsh_DFT_samples_[i][0] = temp_DFT[i][0];
@@ -140,7 +139,7 @@ int SignalProcessor::IntegratePWR()
 
 
   /*Copy samples to integration buffer*/
-  for(int i = 0; i < XfftResolution; i++)
+  for(uint i = 0; i < XfftBinNumber; i++)
     {
       integration_PWR_buffer_[i] = integration_PWR_buffer_[i]/ (kDefaultIntegrationConstant * XsampleRate);
     }
@@ -156,11 +155,11 @@ int SignalProcessor::IntegratePWR()
 int SignalProcessor::ConvertDFTData()
 {
 
-  for(int i = 0; i < XfftResolution; i++)
+  for(uint i = 0; i < XfftBinNumber; i++)
     {
 
       integration_PWR_buffer_[i] =  integration_PWR_buffer_[i] +
-	  (double(1.0/XfftResolution) *
+	  (double(1.0/XfftBinNumber) *
 	      (sqrt((nsh_DFT_samples_[i][0]*nsh_DFT_samples_[i][0])+
 		    (nsh_DFT_samples_[i][1]*nsh_DFT_samples_[i][1]))*sqrt((nsh_DFT_samples_[i][0]*nsh_DFT_samples_[i][0])+
 									(nsh_DFT_samples_[i][1]*nsh_DFT_samples_[i][1]))));
@@ -192,7 +191,7 @@ int SignalProcessor::ResetIntegrationBuffer()
 {
 
   /*Re-0 initilization of integration_PWR_buffer_*/
-  for(int i = 0; i< XfftResolution; i++)
+  for(uint i = 0; i< XfftBinNumber; i++)
     {
       integration_PWR_buffer_[i] = 0;
     }
@@ -205,9 +204,9 @@ int SignalProcessor::ResetIntegrationBuffer()
 int SignalProcessor::ExportRawDataToFile()
 {
 
-  for(int i = 0; i< XfftResolution; i++)
+  for(uint i = 0; i< XfftBinNumber; i++)
     {
-      if(i == XfftResolution-1)
+      if(i == XfftBinNumber-1)
 	{
 	  f_noise_spectrum_ <<  integration_PWR_buffer_[i];
 	}
@@ -219,8 +218,7 @@ int SignalProcessor::ExportRawDataToFile()
 
 
 
-
-  /*NEW LINE FOR NEW DEF_FFT_SIZE SAMPLES*/
+  /*NEW LINE FOR NEW #{DEF_FFT_SIZE SAMPLES}*/
   f_noise_spectrum_ << "\n";
 
 return 0;
