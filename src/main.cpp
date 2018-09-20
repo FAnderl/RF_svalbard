@@ -39,14 +39,14 @@ int main(int argc, char * argv[])
 
   cmlo.add_options()
 
-		    ("a, deviceAddress" , " USRP hardware address; if not defined default address (192.68.10.2) is used", cxxopts::value<std::string>())
-		    ("l, lowerFrequency" , "Defines lower threshold for recorded band",cxxopts::value<uint64_t>())
-		    ("u, upperFrequency","Defines upper threshold for recorded band ",cxxopts::value<uint64_t>())
-		    ("g, gain", "Defines USRP Rx gain",cxxopts::value<int8_t>())
-		    ("w, windowing", "If set to true, Blackmann window is applied prior to DFT")
-		    ("inorder", "If set to true, the DFT is stored in order and NOT DC-centered")
-		    ("d, Debug", "If set on true, Debug mode is active enabling additional console output")
-		    ;
+			("a, deviceAddress" , " USRP hardware address; if not defined default address (192.68.10.2) is used", cxxopts::value<std::string>())
+			("l, lowerFrequency" , "Defines lower threshold for recorded band",cxxopts::value<uint64_t>())
+			("u, upperFrequency","Defines upper threshold for recorded band ",cxxopts::value<uint64_t>())
+			("g, gain", "Defines USRP Rx gain",cxxopts::value<int8_t>())
+			("w, windowing", "If set to true, Blackmann window is applied prior to DFT")
+			("inorder", "If set to true, the DFT is stored in order and NOT DC-centered")
+			("d, Debug", "If set on true, Debug mode is active enabling additional console output")
+			;
 
 
   auto result = cmlo.parse(argc, argv);
@@ -183,7 +183,7 @@ int main(int argc, char * argv[])
 
 
 
-  int conf_succ = usrp_wrapper->InitializeUSRP();
+  usrp_wrapper->InitializeUSRP();
 
 
   DiscreteFourierTransformator *dft_wrapper = new DiscreteFourierTransformator();

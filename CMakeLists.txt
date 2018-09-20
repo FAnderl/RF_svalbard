@@ -72,7 +72,7 @@ message(WARNING "BOOST_LIBRARY_DIRS" ${Boost_LIBRARY_DIRS})
 link_directories(${Boost_LIBRARY_DIRS} /home/unis/UNIS/Software/fftw-3.3.8/build  /usr/lib /usr/local/lib)
 
 ### Make the executable #######################################################
-add_executable(RfSvalbard ./src/main.cpp ./src/DFTNoise.cpp ./src/NoiseSpectrumHandler.cpp ./src/Usrp.cpp)
+add_executable(RfSvalbard ./src/main.cpp ./src/SdrUsrp.cpp ./src/SignalProcessor.cpp ./src/DiscreteFourierTransformator.cpp)
 
 SET(CMAKE_BUILD_TYPE "Release")
 MESSAGE(STATUS "******************************************************************************")
@@ -89,14 +89,14 @@ MESSAGE(STATUS "****************************************************************
 if(NOT UHD_USE_STATIC_LIBS)
 	message(STATUS "Status of variable: " ${UHD_USE_STATIC_LIBS})
     message(STATUS "Linking against shared UHD library.")
-    target_link_libraries(RF_Svalbard ${UHD_LIBRARIES} ${Boost_LIBRARIES} m fftw3 gnuradio-fft)
+    target_link_libraries(RfSvalbard ${UHD_LIBRARIES} ${Boost_LIBRARIES} m fftw3 gnuradio-fft)
 # Shared library case: All we need to do is link against the library, and
 # anything else we need (in this case, some Boost libraries):
 else(NOT UHD_USE_STATIC_LIBS)
 	message(STATUS "Status of variable UHD_STATIC_LIB_DEPS: " ${UHD_STATIC_LIB_DEPS})
 	message(STATUS "Status of variable UHD_STATIC_LIB_LINK_FLAG: " ${UHD_STATIC_LIB_LINK_FLAG})
     message(STATUS "Linking against static UHD library.")
-    target_link_libraries(RF_Svalbard 
+    target_link_libraries(RfSvalbard 
 		
         # We could use ${UHD_LIBRARIES}, but linking requires some extra flags,
         # so we use this convenience variable provided to us
