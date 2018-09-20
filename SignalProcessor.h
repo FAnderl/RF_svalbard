@@ -1,5 +1,5 @@
 /*
- * NoiseSpectrumHandler.h
+ * SignalProcessor.h
  *  
  *
  *  This file is part of the NoiseMap Svalbard (UNIS) project
@@ -8,8 +8,8 @@
  *      Author: Florian Anderl (Guest Master Student AGF)
  */
 
-#ifndef NOISESPECTRUMHANDLER_H_
-#define NOISESPECTRUMHANDLER_H_
+#ifndef SIGNALPROCESSOR_H_
+#define SIGNALPROCESSOR_H_
 
 
 #include <stdint.h>
@@ -18,23 +18,24 @@
 #include <fstream>
 #include <cmath>
 #include <ctgmath>
-#include "defines.h"
+
+#include "Constants.h"
 
 
-/*class Noise Spectrum Handler takes care of interpreting, exporting and perhaps
+/*class Signal Processor takes care of interpreting, exporting and perhaps
  * converting the DFT results*/
 
-class NoiseSpectrumHandler
+class SignalProcessor
 {
 public:
-  NoiseSpectrumHandler ();
+  SignalProcessor ();
   virtual
-  ~NoiseSpectrumHandler ();
+  ~SignalProcessor ();
 
   /*Constructor*/
-  NoiseSpectrumHandler(RFmode rf_m);
+  SignalProcessor(RFmode rf_m);
 
-  int FileConfig(time_t start_time);
+  int InitializeOutFile(time_t start_time);
 
   int RearrangeDFT();
 
@@ -51,22 +52,22 @@ public:
 private:
 
   /*RF Recording mode in which main() was called*/
-  RFmode active_rf_mode;
+  RFmode active_rf_mode_;
 
-  std::string date_time_str;
+  std::string date_time_str_;
 
-  std::string frequency_band_str;
+  std::string frequency_band_str_;
 
-  std::ofstream f_noise_spectrum;
+  std::ofstream f_noise_spectrum_;
 
   /*Complex samples*/
-  fftw_complex* nsh_DFT_samples;
+  fftw_complex* nsh_DFT_samples_;
 
 
   /*Integration buffer*/
-  double* integration_PWR_buffer;
+  double* integration_PWR_buffer_;
 
 
 };
 
-#endif /* NOISESPECTRUMHANDLER_H_ */
+#endif /* SIGNALPROCESSOR_H_ */

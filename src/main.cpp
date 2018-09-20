@@ -6,9 +6,6 @@
  */
 
 
-#include "../Usrp.h"
-#include "../DFTNoise.h"
-#include "../NoiseSpectrumHandler.h"
 #include "../defines.h"
 
 
@@ -16,11 +13,15 @@
  * DOCUMENTATION: -> https://github.com/jarro2783/cxxopts*/
 #include <cxxopts.hpp>
 
+#include "../DiscreteFourierTransformator.h"
+#include "../SdrUsrp.h"
+#include "../SignalProcessor.h"
 
-uint64_t ext_num_FILE_recv_RF_samps;
-uint64_t ext_num_INT_recv_RF_samps;
-std::string ext_dev_addr;
-bool _debug_mode;
+
+uint64_t XnumRecvSamplesFileTag;
+uint64_t XnumRecvSamplesIntegrationTag;
+std::string XdeviceAddress;
+bool XdebugMode;
 
 
 
@@ -54,10 +55,10 @@ int main(int argc, char * argv[])
 
 
   /*Default initialization of GLOBAL control variable*/
-  ext_num_FILE_recv_RF_samps = 0;
+  XnumRecvSamplesFileTag = 0;
 
   /*Default initialization of GLOBAL control variable*/
-  ext_num_INT_recv_RF_samps = 0;
+  XnumRecvSamplesIntegrationTag = 0;
 
 
 
@@ -67,11 +68,11 @@ int main(int argc, char * argv[])
 
   if(result["d"].as<bool>())
     {
-      _debug_mode = true;
+      XdebugMode = true;
     }
   else
     {
-      _debug_mode = false;
+      XdebugMode = false;
     }
 
   if(result["w"].as<bool>())
@@ -97,7 +98,7 @@ int main(int argc, char * argv[])
   /*------------------------- EXECUTION ----------------------------------------------*/
 
 
-  Usrp *usrp_wrapper;
+   SdrUsrp *usrp_wrapper = nullptr;
 
 
   /*----------------CMD ARGUMENT MODE--------------------------------------*/
@@ -114,14 +115,14 @@ int main(int argc, char * argv[])
 	  if(result["g"].count() == 1)
 	    {
 	      puts("gain specified");
-	      usrp_wrapper = new Usrp(result["a"].as<std::string>(), result["l"].as<uint64_t>(),
+	      usrp_wrapper = new SdrUsrp(result["a"].as<std::string>(), result["l"].as<uint64_t>(),
 				      result["u"].as<uint64_t>(), result["g"].as<int8_t>() );
 	    }
 
 	  else
 	    {
-	      usrp_wrapper = new Usrp(const_usrp_addr, result["l"].as<uint64_t>(),
-				      result["u"].as<uint64_t>(), DEF_GAIN);
+	      usrp_wrapper = new SdrUsrp(kConstUsrpAddress, result["l"].as<uint64_t>(),
+				      result["u"].as<uint64_t>(), kDefaultGain);
 
 	    }
 	}
@@ -134,15 +135,15 @@ int main(int argc, char * argv[])
 
 	  if(result["g"].count() == 1)
 	    {
-	      usrp_wrapper = new Usrp(const_usrp_addr, result["l"].as<uint64_t>(),
+	      usrp_wrapper = new SdrUsrp(kConstUsrpAddress, result["l"].as<uint64_t>(),
 				      result["u"].as<uint64_t>(), result["g"].as<int8_t>() );
 	      puts("gain specified");
 	    }
 
 	  else
 	    {
-	      usrp_wrapper = new Usrp(const_usrp_addr, result["l"].as<uint64_t>(),
-				      result["u"].as<uint64_t>(), DEF_GAIN);
+	      usrp_wrapper = new SdrUsrp(kConstUsrpAddress, result["l"].as<uint64_t>(),
+				      result["u"].as<uint64_t>(), kDefaultGain);
 
 	    }
 	}
@@ -159,7 +160,7 @@ int main(int argc, char * argv[])
 
       std::cout << "INFO: Using default configuration" << std::endl;
       activeRF_mode = RFmode::standard_band;
-      usrp_wrapper = new Usrp();
+      usrp_wrapper = new SdrUsrp();
     }
 
 
@@ -174,37 +175,37 @@ int main(int argc, char * argv[])
 
 
   /*NEW*/
-  usrp_wrapper->UsrpCalculateParameters();
+  usrp_wrapper->CalculateParameters();
 
   /*NEW*/
-  usrp_wrapper->UsrpPrepareSampleBuffer();
+  usrp_wrapper->PrepareSampleBuffer();
 
 
 
 
   /*Sets USRP device parameters*/
-  int conf_succ = usrp_wrapper->UsrpConfig();
+  int conf_succ = usrp_wrapper->InitializeUSRP();
 
 
   /*Wrapper Class for DFT Analysis*/
-  DFTNoise *dft_wrapper = new DFTNoise();
+  DiscreteFourierTransformator *dft_wrapper = new DiscreteFourierTransformator();
 
 
   /*Container Variable storing start_time of */
   time_t init_start_time = time(NULL);
 
-  NoiseSpectrumHandler *nsh = nullptr;
+  SignalProcessor *nsh = nullptr;
 
-  nsh = new NoiseSpectrumHandler(activeRF_mode);
+  nsh = new SignalProcessor(activeRF_mode);
 
-  /*First Call of FileConfig -> but not the last (see while-loop below)
-   * -> new call to FileConfig every 2h
+  /*First Call of InitializeOutFile -> but not the last (see while-loop below)
+   * -> new call to InitializeOutFile every 2h
    * -> see loop below */
-  nsh->FileConfig(init_start_time);
+  nsh->InitializeOutFile(init_start_time);
 
 
   /*Initializes Receiver*/
-  usrp_wrapper->UsrpStartUp();
+  usrp_wrapper->StartUpUSRP();
 
   /*Temporary POINTER to Container of RF samples for hand-over to DFT-wrapper instance*/
   std::complex<double> * temp_buff_rf;
@@ -218,33 +219,33 @@ int main(int argc, char * argv[])
     {
 
       /*Issues Receive command to URSP */
-      temp_buff_rf = usrp_wrapper->UsrpRFDataAcquisition();
+      temp_buff_rf = usrp_wrapper->RFDataAcquisitionUSRP();
 
       /*checks wether number of samples exceeds hard-coded threshold
        * -> if yes, new output file is created*/
-      if(ext_num_FILE_recv_RF_samps > (ext_sample_rate * DEF_FILE_CONSTANT))
+      if(XnumRecvSamplesFileTag > (XsampleRate * DEF_FILE_CONSTANT))
 	{
-	  /*reset ext_num_FILE_recv_RF_samps*/
-	  /*TODO: UPDATE -> 0 -> ext_num_FILE_recv_RF_samps - (ext_sample_rate * DEF_FILE_CONSTANT) */
-	  ext_num_FILE_recv_RF_samps = ext_num_FILE_recv_RF_samps - (ext_sample_rate * DEF_FILE_CONSTANT) ;
+	  /*reset XnumRecvSamplesFileTag*/
+	  /*TODO: UPDATE -> 0 -> XnumRecvSamplesFileTag - (XsampleRate * DEF_FILE_CONSTANT) */
+	  XnumRecvSamplesFileTag = XnumRecvSamplesFileTag - (XsampleRate * DEF_FILE_CONSTANT) ;
 
 	  delete nsh;  /*delete current instance of Noise Spectrum Handler*/
 
-	  nsh = new NoiseSpectrumHandler(activeRF_mode); /*create new instance of Noise Spectrum Handler*/
+	  nsh = new SignalProcessor(activeRF_mode); /*create new instance of Noise Spectrum Handler*/
 
-	  nsh->FileConfig(time(NULL));
+	  nsh->InitializeOutFile(time(NULL));
 	}
 
 
       /*RESET INTEGRATION VARIABLE EVERY 60 SECONDS
        * -> CONDITION If number or received samples EXCEEDS 60s-threshold EXACTLY by the number of
-       * acquired samples per cycle (ext_fft_resolution)
-       * -> integration_control flag is reset to ext_fft_resolution
+       * acquired samples per cycle (XfftResolution)
+       * -> integration_control flag is reset to XfftResolution
        * */
-      if(ext_num_INT_recv_RF_samps == (ext_sample_rate * 60) + ext_fft_resolution) /*TODO: UPDATE-> Changed condition (+ext_fft_resolution)*/
+      if(XnumRecvSamplesIntegrationTag == (XsampleRate * 60) + XfftResolution) /*TODO: UPDATE-> Changed condition (+XfftResolution)*/
 	{
-	  /*UPDATE: 0 -> ext_fft_resolution*/
-	  ext_num_INT_recv_RF_samps = ext_fft_resolution;
+	  /*UPDATE: 0 -> XfftResolution*/
+	  XnumRecvSamplesIntegrationTag = XfftResolution;
 	}
 
 
@@ -252,7 +253,7 @@ int main(int argc, char * argv[])
       /*CONDITION:
        * IF received sample number is SMALLER OR EQUAL than the number of samples expected in defined period T
        * -> load sampls into buffer */
-      if(ext_num_INT_recv_RF_samps <= (DEF_INTEGRATION_CONST * ext_sample_rate))
+      if(XnumRecvSamplesIntegrationTag <= (kDefaultIntegrationConstant * XsampleRate))
 	{
 
 	  dft_wrapper->GetRFSamples(temp_buff_rf);
@@ -266,7 +267,7 @@ int main(int argc, char * argv[])
 	    }
 
 
-	  dft_wrapper->ComputeNoiseDFT();
+	  dft_wrapper->ComputeDFT();
 
 
 	  nsh->GetDFTData(dft_wrapper->ExportDFTResults());
@@ -289,7 +290,7 @@ int main(int argc, char * argv[])
 	  /*TODO: Update to Condition:
 	   * -> Now (==) instead of (>=)
 	   */
-	  if((ext_num_INT_recv_RF_samps) == (DEF_INTEGRATION_CONST * ext_sample_rate))
+	  if((XnumRecvSamplesIntegrationTag) == (kDefaultIntegrationConstant * XsampleRate))
 	    {
 
 	      /*Computes Average*/
