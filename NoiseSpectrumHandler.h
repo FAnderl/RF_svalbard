@@ -67,9 +67,6 @@ private:
   double* integration_PWR_buffer;
 
 
-  /*Magnitues of samples from nsh_DFT_samples*/
-  double* nsh_pwr_DFT_samples;			/*TODO: Depreacted -> REMOVE*/
-
 };
 
 #endif /* NOISESPECTRUMHANDLER_H_ */

@@ -31,7 +31,8 @@ DFTNoise::DFTNoise ()
 DFTNoise::~DFTNoise ()
 {
   fftw_destroy_plan(DFT_plan);
-  fftw_free(input_samples), fftw_free(DFT_samples);
+  fftw_free(input_samples);
+  fftw_free(DFT_samples);
 }
 
 

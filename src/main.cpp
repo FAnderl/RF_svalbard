@@ -50,7 +50,7 @@ int main(int argc, char * argv[])
 
 
   /*Sets threat priority*/
-  uhd::set_thread_priority_safe();
+  //uhd::set_thread_priority_safe();
 
 
   /*Default initialization of GLOBAL control variable*/
@@ -193,9 +193,9 @@ int main(int argc, char * argv[])
   /*Container Variable storing start_time of */
   time_t init_start_time = time(NULL);
 
+  NoiseSpectrumHandler *nsh = nullptr;
 
-
-  NoiseSpectrumHandler *nsh = new NoiseSpectrumHandler(activeRF_mode);
+  nsh = new NoiseSpectrumHandler(activeRF_mode);
 
   /*First Call of FileConfig -> but not the last (see while-loop below)
    * -> new call to FileConfig every 2h
@@ -225,20 +225,26 @@ int main(int argc, char * argv[])
       if(ext_num_FILE_recv_RF_samps > (ext_sample_rate * DEF_FILE_CONSTANT))
 	{
 	  /*reset ext_num_FILE_recv_RF_samps*/
-	  ext_num_FILE_recv_RF_samps = 0;
+	  /*TODO: UPDATE -> 0 -> ext_num_FILE_recv_RF_samps - (ext_sample_rate * DEF_FILE_CONSTANT) */
+	  ext_num_FILE_recv_RF_samps = ext_num_FILE_recv_RF_samps - (ext_sample_rate * DEF_FILE_CONSTANT) ;
 
-	  delete nsh;  /*delete current instance of NSH*/
+	  delete nsh;  /*delete current instance of Noise Spectrum Handler*/
 
-	  NoiseSpectrumHandler *nsh = new NoiseSpectrumHandler(activeRF_mode); /*create new instance of */
+	  nsh = new NoiseSpectrumHandler(activeRF_mode); /*create new instance of Noise Spectrum Handler*/
 
 	  nsh->FileConfig(time(NULL));
 	}
 
 
-      /*RESET INTEGRATION VARIABLE EVERY 60 SECONDS*/
-      if(ext_num_INT_recv_RF_samps == (ext_sample_rate*60))
+      /*RESET INTEGRATION VARIABLE EVERY 60 SECONDS
+       * -> CONDITION If number or received samples EXCEEDS 60s-threshold EXACTLY by the number of
+       * acquired samples per cycle (ext_fft_resolution)
+       * -> integration_control flag is reset to ext_fft_resolution
+       * */
+      if(ext_num_INT_recv_RF_samps == (ext_sample_rate * 60) + ext_fft_resolution) /*TODO: UPDATE-> Changed condition (+ext_fft_resolution)*/
 	{
-	  ext_num_INT_recv_RF_samps = 0;
+	  /*UPDATE: 0 -> ext_fft_resolution*/
+	  ext_num_INT_recv_RF_samps = ext_fft_resolution;
 	}
 
 
@@ -280,8 +286,10 @@ int main(int argc, char * argv[])
 
 
 
-	  /*TODO: INVESTIGATE CONDITION -> Equality should be sufficient -> Replace eventually*/
-	  if((ext_num_INT_recv_RF_samps) >= (DEF_INTEGRATION_CONST * ext_sample_rate))
+	  /*TODO: Update to Condition:
+	   * -> Now (==) instead of (>=)
+	   */
+	  if((ext_num_INT_recv_RF_samps) == (DEF_INTEGRATION_CONST * ext_sample_rate))
 	    {
 
 	      /*Computes Average*/
@@ -301,9 +309,10 @@ int main(int argc, char * argv[])
     }
 
 
-  delete nsh;
+  delete nsh;		/*free memory*/
   delete dft_wrapper;  /*free memory*/
   delete usrp_wrapper; /*free memory*/
+  delete temp_buff_rf; /*free memory*/
 
   return conf_succ;
 }

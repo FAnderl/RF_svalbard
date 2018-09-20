@@ -10,7 +10,7 @@
 
 #include "../NoiseSpectrumHandler.h"
 
-NoiseSpectrumHandler::NoiseSpectrumHandler () : nsh_DFT_samples(NULL), nsh_pwr_DFT_samples(NULL)
+NoiseSpectrumHandler::NoiseSpectrumHandler () : nsh_DFT_samples(nullptr)
 {
   /*DEPRECATED: Do never use the default constructor*/
 
@@ -30,21 +30,18 @@ NoiseSpectrumHandler::NoiseSpectrumHandler () : nsh_DFT_samples(NULL), nsh_pwr_D
 NoiseSpectrumHandler::~NoiseSpectrumHandler ()
 {
 
-  delete []integration_PWR_buffer;
-  delete []nsh_pwr_DFT_samples;
-  fftw_free(nsh_DFT_samples);
-  f_noise_spectrum.close();
+  delete []integration_PWR_buffer; /*free memory -> note delete []!*/
+  f_noise_spectrum.close();	   /*closes current data output file orderly*/
 
 }
 
 
 
-NoiseSpectrumHandler::NoiseSpectrumHandler(RFmode rf_m) : nsh_DFT_samples(NULL), nsh_pwr_DFT_samples(NULL)
+NoiseSpectrumHandler::NoiseSpectrumHandler(RFmode rf_m) : nsh_DFT_samples(nullptr)
 {
 
   active_rf_mode = rf_m;
 
-  nsh_pwr_DFT_samples = new double[ext_fft_resolution];
 
   integration_PWR_buffer = new double[ext_fft_resolution];
 
@@ -219,6 +216,8 @@ int NoiseSpectrumHandler::ExportRawDataToFile()
 	  f_noise_spectrum <<  integration_PWR_buffer[i] << ",";
 	}
     }
+
+
 
 
   /*NEW LINE FOR NEW DEF_FFT_SIZE SAMPLES*/

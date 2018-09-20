@@ -40,7 +40,7 @@ const int32_t DEF_FFT_BINSIZE = 1250 ;
 
 /*File Constant defines when a new file for data storage will be create
 DEFINITION: time of file coverage in seconds*/
-const int32_t DEF_FILE_CONSTANT =  7200;
+const int32_t DEF_FILE_CONSTANT =  60;
 
 
 /*Default values for default Usrp constructor*/
