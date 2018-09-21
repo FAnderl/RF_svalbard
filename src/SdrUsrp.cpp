@@ -73,18 +73,14 @@ int SdrUsrp::CalculateParameters()
       /*Calculate SdrUsrp center frequency from cmd-defined parameters*/
       center_frequency_ = lower_frequency_ + (upper_frequency_ - lower_frequency_)/2;
 
-      /*Calculate SdrUsrp center frequency from cmd-defined parameters
-       * TODO: rework -> fixed set of possible sample rates*/
+      /*Calculate SdrUsrp center frequency from cmd-defined parameters*/
       sample_rate_desired_ = (upper_frequency_ - lower_frequency_) +
-	  0.05 *(upper_frequency_ - lower_frequency_) ; /*+ 5% of spectral distance -> (sufficient?) */
+	  0.05 *(upper_frequency_ - lower_frequency_) ;
 
-      /*Initializes local assist variable -> TODO: maybe replace with class member variable*/
+
       uint32_t temp_freq_res_desired = kDefaultFrequencyResolution;
 
-      /*TODO: Test!*/
-      /* Increments samples rate until even decimation rate requirement is satisfied
-       * ONLY BETTER SAMPLES RATES ALLOWED
-       * -> TODO: Rework architecture of this do.. while.. loop*/
+
       do
 	{
 	  if(std::fmod((double(kAdcRate)/double(sample_rate_desired_)),2) == 0){break;}
@@ -92,9 +88,9 @@ int SdrUsrp::CalculateParameters()
 	}while(std::fmod((double(kAdcRate)/double(sample_rate_desired_)),2) != 0);
 
 
-      /*ALLOWS ONLY INTEGER FFT BINSIZES (number of fft bins)
-       * TODO: TEST! */
-      while(std::fmod((double(sample_rate_desired_)/double(temp_freq_res_desired)),1) != 0)
+      /* ALLOWS ONLY INTEGER NUMBER OF FFT BINS */
+      while((std::fmod((double(sample_rate_desired_)/double(temp_freq_res_desired)),1) != 0) || (
+	  double(sample_rate_desired_)/double(temp_freq_res_desired) < 1024))
 	{
 	  temp_freq_res_desired  = temp_freq_res_desired - 1;
 	}
@@ -106,7 +102,7 @@ int SdrUsrp::CalculateParameters()
       /*SETS FFT BINSIZE -> EXTREMELY IMPORTANT*/
       XfftBinNumber = sample_rate_desired_/temp_freq_res_desired;
 
-
+      std::cout << "XfftBinNumber: " << XfftBinNumber << std::endl;
 
     }
 
@@ -193,8 +189,8 @@ int SdrUsrp::InitializeUSRP()
   //  std::cout << "Rx Gain set to: " << usrp_intern_->get_rx_gain() << std::endl;
 
 
-  /*Antenna*/
-  /*TODO: If necessary*/
+  /*Specify Antenna*/
+  /*TODO: Necessary for some USRP Models|	*/
 
 
   return 0;

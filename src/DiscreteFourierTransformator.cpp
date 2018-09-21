@@ -38,7 +38,7 @@ DiscreteFourierTransformator::~DiscreteFourierTransformator ()
 int DiscreteFourierTransformator::GetRFSamples(std::complex<double> *addr_rf_samples)
 {
 
-  for(int i = 0; i < XfftBinNumber; i++)
+  for(uint i = 0; i < XfftBinNumber; i++)
     {
       input_samples_[i][0] = addr_rf_samples[i].real() ;   /*Copies Real Part of Sample*/
       input_samples_[i][1] = addr_rf_samples[i].imag() ;   /*Copies Imaginary Part of Sample*/
@@ -57,7 +57,7 @@ int DiscreteFourierTransformator::Windowing()
 
 
   /*Apply blackmann window to TIME DOMAIN input samples*/
-  for(int i = 0; i < XfftBinNumber; i++)
+  for(uint i = 0; i < XfftBinNumber; i++)
     {
       input_samples_[i][0] = input_samples_[i][0] * blackmann_window[i];
       input_samples_[i][1] = input_samples_[i][1] * blackmann_window[i];
