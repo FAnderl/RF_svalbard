@@ -12,9 +12,6 @@ from matplotlib.colors import LogNorm
 # - path to data files
 # - period over which data should be plotted in h
 
-
-
-
 dMode = sys.argv[1]
 dPath = sys.argv[2]
 
@@ -180,8 +177,9 @@ if dMode == 'csv':
                         set_list = idx_list[list(idx_list).index (file_suffix + '@'+files_sorted_date[0][idx] +'_T'+ early_bird_raw+ '.csv'):] \
                                    + next_list[:(next_list.index(file_suffix + '@' +files_sorted_date[0][idx+1] +'_T'+ early_bird_raw+ '.csv'))]
 
-                        for idx in range(len(set_list)):
-                            current_csv = set_list[idx]
+                        # Moves file sets to corresponding folders
+                        for jdx in range(len(set_list)):
+                            current_csv = set_list[jdx]
                             bash_arg = 'mv   ' + "\"" + dPath + current_csv + "\"" +'    ' + file_string
                             os.system(bash_arg)
 
@@ -207,26 +205,62 @@ if dMode == 'csv':
 
 
 
+                    pyplot.figure(idx) #create new figure
+
+                    pyplot.pcolormesh( RF_array, cmap='rainbow', norm=LogNorm( vmin=1E-20, vmax=RF_array.max() ) )
 
 
+                    #TODO: Add Information (data\e, axis time, etc. ) to plots
+
+                    ax=pyplot.gca()  # Get axes from figure
+
+                    yticks = ax.get_yticks()
+
+                    xticks = ax.get_xticks()
+
+                    majorticklocs_y = ax.yaxis.get_majorticklocs()
 
 
+                    #TODO: remove!
+                    #ax.yaxis.set_major_locator(pyplot.MaxNLocator(6))
+                    #ax.set_yticklabels( ['8Mhz',  '11Mhz', '14Mhz', '17Mhz', '20Mhz'] )
 
-                    pyplot.pcolor(RF_array , norm=LogNorm(vmin=1E-20, vmax = RF_array.max()))
 
-                    pyplot.xlim(0, 60 * 24 )
+                    if file_suffix.__contains__('Standardband'):
+                        y_range = (0., 625., 1250.)
+                        ax.set_yticks(y_range)
+                        ax.set_yticklabels(['7.75', '14', '20.25'])
+                        majorticklocs_y = ax.yaxis.get_majorticklocs()
+                        pyplot.xlabel('time (min)')
+                        pyplot.ylabel('Frequency (Mhz)')
 
-                    pyplot.colorbar()
+                        pyplot.title('RF Map - Svalbard (24h overview)\n' +  files_sorted_date[0][idx] +
+                                 '_' + early_bird_raw + ' - ' +
+                                  files_sorted_date[0][idx+1] +
+                                  '_' + early_bird_raw
+                                   , fontname="Times New Roman Bold")
 
-                    pyplot.xlabel( 'time in min' )
 
-                    pyplot.ylabel( 'Frequency Band' )
+                    #mode for alternate bands
+                    else:
+                        fft_bins = len(data[0])
+                        freq_band = []
+                        freq_band = file_suffix.split('_')
+                        freq_band[0] = freq_band[0].split('.')[0]
+                        freq_band[1] = freq_band[1].split( '.' )[0]
+                        nyquist_band = freq_band[1]-freq_band[0]
+                        diff = fft_bins-nyquist_band
+                        freq_overhead = diff/2
 
-                    pyplot.title( 'RF Map - Svalbard (24h overview)' )
+                        y_range = (0., fft_bins/2, fft_bins)
+                        ax.set_yticks( y_range )
+                        ax.set_yticklabels( [str(freq_band[0]-freq_overhead), nyquist_band/2 , str(freq_band[1]+freq_overhead)] )
+                        pyplot.xlabel( 'time (min)' )
+                        pyplot.ylabel('Frequency (khz)')
 
                     #pyplot.show()
-
-                    pyplot.savefig(file_string+"/RF_Map.png")
+                    #TODO: try different dpi-settings
+                    pyplot.savefig(file_string+"/RF_Map.png", dpi= 1600)
 
                     #clear figure
                     pyplot.clf()
