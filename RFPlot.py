@@ -97,7 +97,7 @@ if dMode == 'csv':
 
 
                 files_sorted_date = [[], []]
-                rf_data_dict = {};
+                rf_data_dict = {}
 
 
                 #sorts filenames [[day_info][time_info]]
@@ -205,65 +205,67 @@ if dMode == 'csv':
 
 
 
-                    pyplot.figure(idx) #create new figure
+                        pyplot.figure(idx) #create new figure
 
-                    pyplot.pcolormesh( RF_array, cmap='rainbow', norm=LogNorm( vmin=1E-20, vmax=RF_array.max() ) )
-
-
-                    #TODO: Add Information (data\e, axis time, etc. ) to plots
-
-                    ax=pyplot.gca()  # Get axes from figure
-
-                    yticks = ax.get_yticks()
-
-                    xticks = ax.get_xticks()
-
-                    majorticklocs_y = ax.yaxis.get_majorticklocs()
+                        pyplot.pcolormesh( RF_array, cmap='rainbow', norm=LogNorm( vmin=1E-20, vmax=RF_array.max() ) )
 
 
-                    #TODO: remove!
-                    #ax.yaxis.set_major_locator(pyplot.MaxNLocator(6))
-                    #ax.set_yticklabels( ['8Mhz',  '11Mhz', '14Mhz', '17Mhz', '20Mhz'] )
+                        #TODO: Add Information (data\e, axis time, etc. ) to plots
 
+                        ax=pyplot.gca()  # Get axes from figure
 
-                    if file_suffix.__contains__('Standardband'):
-                        y_range = (0., 625., 1250.)
-                        ax.set_yticks(y_range)
-                        ax.set_yticklabels(['7.75', '14', '20.25'])
+                        yticks = ax.get_yticks()
+
+                        xticks = ax.get_xticks()
+
                         majorticklocs_y = ax.yaxis.get_majorticklocs()
-                        pyplot.xlabel('time (min)')
-                        pyplot.ylabel('Frequency (Mhz)')
-
-                        pyplot.title('RF Map - Svalbard (24h overview)\n' +  files_sorted_date[0][idx] +
-                                 '_' + early_bird_raw + ' - ' +
-                                  files_sorted_date[0][idx+1] +
-                                  '_' + early_bird_raw
-                                   , fontname="Times New Roman Bold")
 
 
-                    #mode for alternate bands
-                    else:
-                        fft_bins = len(data[0])
-                        freq_band = []
-                        freq_band = file_suffix.split('_')
-                        freq_band[0] = freq_band[0].split('.')[0]
-                        freq_band[1] = freq_band[1].split( '.' )[0]
-                        nyquist_band = freq_band[1]-freq_band[0]
-                        diff = fft_bins-nyquist_band
-                        freq_overhead = diff/2
+                        #TODO: remove!
+                        #ax.yaxis.set_major_locator(pyplot.MaxNLocator(6))
+                        #ax.set_yticklabels( ['8Mhz',  '11Mhz', '14Mhz', '17Mhz', '20Mhz'] )
 
-                        y_range = (0., fft_bins/2, fft_bins)
-                        ax.set_yticks( y_range )
-                        ax.set_yticklabels( [str(freq_band[0]-freq_overhead), nyquist_band/2 , str(freq_band[1]+freq_overhead)] )
-                        pyplot.xlabel( 'time (min)' )
-                        pyplot.ylabel('Frequency (khz)')
 
-                    #pyplot.show()
-                    #TODO: try different dpi-settings
-                    pyplot.savefig(file_string+"/RF_Map.png", dpi= 1600)
+                        if file_suffix.__contains__('Standardband'):
+                            y_range = (0., 625., 1250.)
+                            ax.set_yticks(y_range)
+                            ax.set_yticklabels(['7.75', '14', '20.25'])
+                            majorticklocs_y = ax.yaxis.get_majorticklocs()
+                            pyplot.xlabel('time (min)')
+                            pyplot.ylabel('Frequency (Mhz)')
 
-                    #clear figure
-                    pyplot.clf()
+                            pyplot.title('RF Map - Svalbard (24h overview)\n' +  files_sorted_date[0][idx] +
+                                     '_' + early_bird_raw + ' - ' +
+                                      files_sorted_date[0][idx+1] +
+                                      '_' + early_bird_raw
+                                      )
+
+
+                        #mode for alternate bands
+                        else:
+                            fft_bins = len(data[0])
+                            freq_band = []
+                            freq_band = file_suffix.split('_')
+                            freq_band[0] = freq_band[0].split('.')[0]
+                            freq_band[1] = freq_band[1].split( '.' )[0]
+                            nyquist_band = freq_band[1]-freq_band[0]
+                            diff = fft_bins-nyquist_band
+                            freq_overhead = diff/2
+
+                            y_range = (0., fft_bins/2, fft_bins)
+                            ax.set_yticks( y_range )
+                            ax.set_yticklabels( [str(freq_band[0] - freq_overhead), str(freq_band[0] + nyquist_band/2) , str(freq_band[1] + freq_overhead)] )
+                            pyplot.xlabel( 'time (min)' )
+                            pyplot.ylabel('Frequency (khz)')
+
+
+                        pyplot.colorbar()
+                        #pyplot.show()
+                        #TODO: try different dpi-settings
+                        pyplot.savefig(file_string+"/RF_Map.png", dpi= 1600)
+
+                        #clear figure
+                        pyplot.clf()
 
 
 

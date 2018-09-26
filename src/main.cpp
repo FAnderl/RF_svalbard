@@ -131,7 +131,7 @@ int main(int argc, char * argv[])
 	{
 
 
-	  std::cout << "INFO: No USRP address defined -> using default address: 192.168.10.2 ";
+	  std::cout << "INFO: No USRP address defined -> using default address: 192.168.10.2 " << std::endl;
 
 	  if(result["g"].count() == 1)
 	    {
