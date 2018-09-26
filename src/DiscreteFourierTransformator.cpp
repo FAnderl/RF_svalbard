@@ -9,19 +9,21 @@
  */
 
 #include "../DiscreteFourierTransformator.h"
-
 #include <gnuradio/fft/window.h>
 
+/* Default Constructor */
 DiscreteFourierTransformator::DiscreteFourierTransformator ()
 {
 
+  /* Initializatin of buffers for DFT */
+
   input_samples_ = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * XfftBinNumber);
 
-  /*Output memory which  will contain DTF samples in COMPLEX Format*/
+
   DFT_samples_ = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * XfftBinNumber);
 
 
-  DFT_plan_ = fftw_plan_dft_1d(XfftBinNumber, input_samples_, DFT_samples_, FFTW_FORWARD, FFTW_ESTIMATE);
+  DFT_plan_ = fftw_plan_dft_1d(XfftBinNumber, input_samples_, DFT_samples_, FFTW_FORWARD, FFTW_ESTIMATE); /* Creates DFT plan -> see FFTW documentation: http://www.fftw.org/fftw3.pdf*/
 
 
 }
@@ -34,7 +36,7 @@ DiscreteFourierTransformator::~DiscreteFourierTransformator ()
 }
 
 
-/*Gets RF samples & copies them into allocated DFT input memory*/
+
 int DiscreteFourierTransformator::GetRFSamples(std::complex<double> *addr_rf_samples)
 {
 
@@ -48,7 +50,8 @@ int DiscreteFourierTransformator::GetRFSamples(std::complex<double> *addr_rf_sam
 }
 
 
-/*Applies windowing to RF samples BEFORE applying DFT */
+/* Applies windowing to RF samples BEFORE applying DFT
+ * -> the window is implemented through gnuradio:fft:window library */
 int DiscreteFourierTransformator::Windowing()
 {
 
@@ -75,8 +78,7 @@ int DiscreteFourierTransformator::Windowing()
 int DiscreteFourierTransformator::ComputeDFT()
 {
 
-  /*Computation of DFT implemented as FFT*/
-  fftw_execute(DFT_plan_);
+  fftw_execute(DFT_plan_);   /* Computation of DFT implemented as FFT */
 
   return 0;
 }

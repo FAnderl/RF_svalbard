@@ -10,6 +10,7 @@
 
 #include "../SignalProcessor.h"
 
+/* Default Constructor*/
 SignalProcessor::SignalProcessor () : nsh_DFT_samples_(nullptr)
 {
   /*DEPRECATED: Do never use the default constructor*/
@@ -26,16 +27,17 @@ SignalProcessor::SignalProcessor () : nsh_DFT_samples_(nullptr)
 }
 
 
+/* Destructor */
 SignalProcessor::~SignalProcessor ()
 {
 
-  delete []integration_PWR_buffer_; /*free memory -> note delete []!*/
-  f_noise_spectrum_.close();	   /*closes current data output file orderly*/
+  delete []integration_PWR_buffer_; /* Free memory -> note delete []! */
+  f_noise_spectrum_.close();	   /* Closes current data output file orderly wihout loosing data */
 
 }
 
 
-
+/* Custom Constructor */
 SignalProcessor::SignalProcessor(RFmode rf_m) : nsh_DFT_samples_(nullptr)
 {
 
@@ -58,12 +60,15 @@ SignalProcessor::SignalProcessor(RFmode rf_m) : nsh_DFT_samples_(nullptr)
 int SignalProcessor::InitializeOutFile(time_t start_time)
 {
 
-  /*Variables needed for processing time information*/
-  char buffer[20];
-  struct tm *timeinfo = localtime(&start_time);
 
-  /*Formats time string*/
-  strftime(buffer, 20, "%Y%m%d_T%H%M%S", timeinfo);
+  char buffer[20]; /* Variable needed for processing time information */
+
+
+  struct tm *timeinfo = localtime(&start_time);  /* Variable needed for processing time information */
+
+
+  strftime(buffer, 20, "%Y%m%d_T%H%M%S", timeinfo);  /* Formats time string */
+
 
   date_time_str_ = buffer;
 
@@ -126,19 +131,20 @@ int SignalProcessor::RearrangeDFT()
     }
 
 
-  delete []temp_DFT;
+  delete []temp_DFT; /* Free memory */
 
   return 0;
 }
 
 
 
-/*Implements the Integration functionality*/
+/* Implements the Integration functionality */
 int SignalProcessor::IntegratePWR()
 {
 
 
-  /*Copy samples to integration buffer*/
+  /* Every Sample is averaged/integrated by divison by number of
+   * number of times a fft power density frame was added up in the buffer */
   for(uint i = 0; i < XfftBinNumber; i++)
     {
       integration_PWR_buffer_[i] = integration_PWR_buffer_[i]/ (kDefaultIntegrationConstant * XsampleRate);
@@ -151,8 +157,9 @@ int SignalProcessor::IntegratePWR()
 
 
 
-/* Computes Magnitude of complex dft data for POWER SPECTRAL DENSITY */
-int SignalProcessor::ConvertDFTData()
+/* Computes the Power Periodogram by applying formula:
+ * PWR = 1/N ⋅ |F|² */
+int SignalProcessor::ComputePowerPeriodogram()
 {
 
   for(uint i = 0; i < XfftBinNumber; i++)
@@ -163,7 +170,7 @@ int SignalProcessor::ConvertDFTData()
 	      (sqrt((nsh_DFT_samples_[i][0]*nsh_DFT_samples_[i][0])+
 		    (nsh_DFT_samples_[i][1]*nsh_DFT_samples_[i][1]))*sqrt((nsh_DFT_samples_[i][0]*nsh_DFT_samples_[i][0])+
 									(nsh_DFT_samples_[i][1]*nsh_DFT_samples_[i][1]))));
-      /*TODO: Verify equation for DFT power spectrum:  1/n * F²*/
+
 
     }
 
@@ -186,11 +193,9 @@ int SignalProcessor::GetDFTData(fftw_complex *DFTsamples)
 
 /*Resets POWER Integration Buffer after values were written to file
  * -> Note that this function should be called after ExportDataToFile() */
-
 int SignalProcessor::ResetIntegrationBuffer()
 {
 
-  /*Re-0 initilization of integration_PWR_buffer_*/
   for(uint i = 0; i< XfftBinNumber; i++)
     {
       integration_PWR_buffer_[i] = 0;
@@ -217,8 +222,6 @@ int SignalProcessor::ExportRawDataToFile()
     }
 
 
-
-  /*NEW LINE FOR NEW #{DEF_FFT_SIZE SAMPLES}*/
   f_noise_spectrum_ << "\n";
 
 return 0;

@@ -11,10 +11,6 @@
 /*Standard Library*/
 #include <string>
 #include <vector>
-
-
-
-/*Includes from https://kb.ettus.com/Getting_Started_with_UHD_and_C%2B%2B#Create_Variables (UHD c++ API Documentation)*/
 #include <uhd/utils/thread.hpp>
 #include <uhd/utils/safe_main.hpp>
 #include <uhd/usrp/multi_usrp.hpp>
@@ -24,7 +20,6 @@
 #include <boost/format.hpp>
 #include <boost/thread.hpp>
 #include <iostream>
-
 #include "Constants.h"
 
 
@@ -68,7 +63,7 @@ private:
   RFmode usrp_mode_;
 
 
-  /*Data Acquisition*/
+  /*Variables for Data Acquisition*/
 
   std::vector<std::complex<double>> buffs_;  /*Memory for received samples*/
 

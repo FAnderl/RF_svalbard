@@ -284,7 +284,7 @@ int main(int argc, char * argv[])
 
 
 
-	  sp->ConvertDFTData();  /* Gets Power from DFT samples (+ SUMMING POWER VALUES in Buffer for subsequent averaging)*/
+	  sp->ComputePowerPeriodogram();  /* Gets Power from DFT samples (+ SUMMING POWER VALUES in Buffer for subsequent averaging)*/
 
 
 

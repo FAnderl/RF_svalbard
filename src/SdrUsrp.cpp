@@ -2,7 +2,7 @@
  *  SdrUsrp.cpp
  *
  *
- *  This file belongs to the NoiseMap Svalbard (UNIS) project
+ *  This file is part of the NoiseMap Svalbard (UNIS) project
  *
  *  Created on: Sep 5, 2018
  *      Author: Florian Anderl (Guest Master Student AGF)
@@ -17,8 +17,9 @@ uint64_t XsampleRate;
 uint64_t XlowerFrequency;
 uint64_t XupperFrequency;
 
-uint32_t XfftBinNumber; /*strongly coupled with other parameters*/
+uint32_t XfftBinNumber;
 
+/*Default Constructor*/
 SdrUsrp::SdrUsrp(): usrp_address_(kConstUsrpAddress),center_frequency_(kDefaultCenterFrequency), lower_frequency_(kDefaultLowerFrequency),
     upper_frequency_(kDefaultUpperFrequency),sample_rate_desired_(kDefaultSampleRate), gain_(kDefaultGain)
 {
@@ -36,7 +37,7 @@ SdrUsrp::SdrUsrp(): usrp_address_(kConstUsrpAddress),center_frequency_(kDefaultC
 }
 
 
-/*Stops Streaming from SdrUsrp Device*/
+/*Destructor*/
 SdrUsrp::~SdrUsrp()
 {
   buffs_.clear();
@@ -44,6 +45,7 @@ SdrUsrp::~SdrUsrp()
 }
 
 
+/*Custom Constructor*/
 SdrUsrp::SdrUsrp(std::string SdrUsrp_addr, uint64_t l_freq, uint64_t u_freq , int8_t Gain): usrp_address_(SdrUsrp_addr), lower_frequency_(l_freq),
     upper_frequency_(u_freq), gain_(Gain)
 {
@@ -63,7 +65,7 @@ SdrUsrp::SdrUsrp(std::string SdrUsrp_addr, uint64_t l_freq, uint64_t u_freq , in
 }
 
 
-/*Calculates Valid Signal Processing/device parameters*/
+/*Calculates Important Signal Processing/USRP -related parameters*/
 int SdrUsrp::CalculateParameters()
 {
 
@@ -73,7 +75,8 @@ int SdrUsrp::CalculateParameters()
       /*Calculate SdrUsrp center frequency from cmd-defined parameters*/
       center_frequency_ = lower_frequency_ + (upper_frequency_ - lower_frequency_)/2;
 
-      /*Calculate SdrUsrp center frequency from cmd-defined parameters*/
+      /*Calculate SdrUsrp center frequency from cmd-defined parameters
+       * -> Fulfills Nyquist + 5% */
       sample_rate_desired_ = (upper_frequency_ - lower_frequency_) +
 	  0.05 *(upper_frequency_ - lower_frequency_) ;
 
@@ -81,6 +84,8 @@ int SdrUsrp::CalculateParameters()
       uint32_t temp_freq_res_desired = kDefaultFrequencyResolution;
 
 
+      /* This routine only permits EVEN DECIMATION FACTORS (ADC-rate/requested sample rate) in order
+       * to meet the USRP related performance requirements */
       do
 	{
 	  if(std::fmod((double(kAdcRate)/double(sample_rate_desired_)),2) == 0){break;}
@@ -88,7 +93,9 @@ int SdrUsrp::CalculateParameters()
 	}while(std::fmod((double(kAdcRate)/double(sample_rate_desired_)),2) != 0);
 
 
-      /* ALLOWS ONLY INTEGER NUMBER OF FFT BINS */
+      /* This routine only permits fftBinNumbers for which the following conditions are met:
+       *  (1) the sample rate is a integer multiple of fftbinNumber
+       *  (2) The FFT contains at least 1024 Bins */
       while((std::fmod((double(sample_rate_desired_)/double(temp_freq_res_desired)),1) != 0) || (
 	  double(sample_rate_desired_)/double(temp_freq_res_desired) < 1024))
 	{
@@ -99,7 +106,7 @@ int SdrUsrp::CalculateParameters()
       std::cout << "Frequency Resolution of DFT Output: " << temp_freq_res_desired << std::endl;
 
 
-      /*SETS FFT BINSIZE -> EXTREMELY IMPORTANT*/
+      /*SETS FFT BINSIZE -> IMPORTANT*/
       XfftBinNumber = sample_rate_desired_/temp_freq_res_desired;
 
       std::cout << "XfftBinNumber: " << XfftBinNumber << std::endl;
@@ -129,11 +136,10 @@ int SdrUsrp::CalculateParameters()
 
 
 
-/*Allocates Memory according to given parameters
- * REASONING: */
+/*Allocates Memory according to given parameters*/
 int SdrUsrp::PrepareSampleBuffer()
 {
-  /*Allocates memory for received data samples*/
+
   buffs_.resize(XfftBinNumber);
 
   return 0;
@@ -147,35 +153,34 @@ int SdrUsrp::InitializeUSRP()
 
   std::cout << "Configuring SdrUsrp Device...\n" << std::endl;
 
-  /*Creating SdrUsrp Object*/
-  usrp_address_ = "addr=" + usrp_address_; /*completes address line for making SdrUsrp object*/
-
-  usrp_intern_ =  uhd::usrp::multi_usrp::make(usrp_address_); /*creates internal SdrUsrp object for which generic SdrUsrp class is wrapper*/
+  usrp_address_ = "addr=" + usrp_address_;
 
 
-  /*Clock Source*/
-  usrp_intern_->set_clock_source(kConstClockSource); /*Sets SdrUsrp clock source*/
+  usrp_intern_ =  uhd::usrp::multi_usrp::make(usrp_address_); /* Creates internal SdrUsrp object for which generic SdrUsrp class is wrapper*/
 
 
-  /*Daughterboard Specification*/
-  usrp_intern_->set_rx_subdev_spec(kConstSubDevice); /*sets subdevice specification (daughterboard) -> see http://files.ettus.com/manual/page_configuration.html#config_subdev */
+  usrp_intern_->set_clock_source(kConstClockSource); /* Sets SdrUsrp clock source */
+
+
+  usrp_intern_->set_rx_subdev_spec(kConstSubDevice); /* Sets subdevice specification (daughterboard) -
+  > see http://files.ettus.com/manual/page_configuration.html#config_subdev */
+
 
   std::cout << "Chosen Subdevice (Daughterboard): \n" << usrp_intern_->get_pp_string() << std::endl;
 
 
-  /*Sample Rate*/
-  usrp_intern_->set_rx_rate(sample_rate_desired_);  /*sets Rx sample rate*/
+  usrp_intern_->set_rx_rate(sample_rate_desired_);  /* Sets Rx sample rate */
 
 
-  /*Should be same as sample_rate_desired, TODO: TEST*/
-  XsampleRate = usrp_intern_->get_rx_rate();
+  XsampleRate = usrp_intern_->get_rx_rate();  /* Initializes external sample rate variable */
+
 
   std::cout << "I/Q Sampling Rate set to: " << XsampleRate << std::endl;
 
 
 
   /*Center Frequency*/
-  uhd::tune_request_t tune_request(center_frequency_); /*makes tune request to lo for mixing down to baseband in analog frontend*/
+  uhd::tune_request_t tune_request(center_frequency_); /* Makes tune request to lo for mixing down to baseband in analog frontend*/
 
   usrp_intern_->set_rx_freq(tune_request);
 
@@ -183,39 +188,41 @@ int SdrUsrp::InitializeUSRP()
   std::cout << "Rx Center Frequency set to:  " << usrp_intern_->get_rx_freq() << std::endl;
 
 
-  /*Gain TODO: Fix && Uncomment*/
-  //  usrp_intern_->set_rx_gain(gain);
-  //
-  //  std::cout << "Rx Gain set to: " << usrp_intern_->get_rx_gain() << std::endl;
+
+  usrp_intern_->set_rx_gain(gain_);   /*Sets USRP gain (if possible, depending on USRP model)*/
+
+  std::cout << "Rx Gain set to: " << usrp_intern_->get_rx_gain() << std::endl;
 
 
   /*Specify Antenna*/
-  /*TODO: Necessary for some USRP Models|	*/
+  /*TODO: Necessary for some USRP Models */
 
 
   return 0;
 }
 
 
+/* Starts USRP & sets up streaming receiver object
+ * -> stream command is issued here but actual data aquisition is not done here*/
 int SdrUsrp::StartUpUSRP()
 {
 
   std::cout << "Begin Streaming" << std::endl;
 
 
-  /*stream in complex double 64bit format*/
-  uhd::stream_args_t stream_args("fc64");
-
-  /*make receiver stream object*/
-  rx_stream_ = usrp_intern_->get_rx_stream(stream_args);
+  uhd::stream_args_t stream_args("fc64");  /*stream in complex double 64bit format*/
 
 
-  /*TODO: try different stream commands*/
-  uhd::stream_cmd_t sc(uhd::stream_cmd_t::STREAM_MODE_START_CONTINUOUS);
+  rx_stream_ = usrp_intern_->get_rx_stream(stream_args); /*make receiver stream object*/
+
+
+  uhd::stream_cmd_t sc(uhd::stream_cmd_t::STREAM_MODE_START_CONTINUOUS);  /* Creates Stream Command Object */
+
+
   sc.stream_now = true;
 
-  /*Stream Command issued by the STREAM object*/
-  rx_stream_->issue_stream_cmd(sc);
+
+  rx_stream_->issue_stream_cmd(sc);  /* Stream Command issued by the STREAM object */
 
 
   return 0;
@@ -229,20 +236,18 @@ int SdrUsrp::StartUpUSRP()
 std::complex<double>* SdrUsrp::RFDataAcquisitionUSRP()
 {
 
-  /*For Debugging Use Only*/
+
   std::vector<std::complex<double>> dummy;
 
 
   size_t num_rx_samples = 0;
 
-  /* ACTUAL STREAMING*/
+  /* ACTUAL STREAMING is done here ->
+   * loop is only left if required number of samples is received from USRP*/
   do{
 
 
-      /*TODO: Check Data types & validity of pointers/adresses & method arguments*/
-
-      /*recv timeout currently set to 1 second*/
-      num_rx_samples = rx_stream_->recv(&buffs_.front(), buffs_.size(), md_, 1);
+      num_rx_samples = rx_stream_->recv(&buffs_.front(), buffs_.size(), md_, 1);  /* DATA Acquisition happens here*/
 
 
       if(num_rx_samples != buffs_.size()){continue;}
@@ -258,17 +263,15 @@ std::complex<double>* SdrUsrp::RFDataAcquisitionUSRP()
       exit(-1);
     }
 
-  /*NOTE: num_rx_samps has to have specified & expected size at this point*/
-
-  /*incrementing extern control variable*/
-  XnumRecvSamplesFileTag = XnumRecvSamplesFileTag + num_rx_samples;
-
-  /*incrementing extern control variable*/
-  XnumRecvSamplesIntegrationTag = XnumRecvSamplesIntegrationTag + num_rx_samples;
 
 
+  XnumRecvSamplesFileTag = XnumRecvSamplesFileTag + num_rx_samples; /* Incrementing extern control variable -> main.cpp*/
 
-  return &buffs_[0]; /*returns pointer to adress of FIRST ELEMENT of
-  buffer containing the last received samples*/
+
+  XnumRecvSamplesIntegrationTag = XnumRecvSamplesIntegrationTag + num_rx_samples;    /* Incrementing extern control variable */
+
+
+
+  return &buffs_[0];  /* Returns pointer to adress of FIRST ELEMENT of buffer containing the last received samples*/
 }
 
