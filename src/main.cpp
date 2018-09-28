@@ -28,7 +28,9 @@ bool XdebugMode;
 
 
 
-/*Input Arguments: "Device Address, Start & End Frequency of frequency band of interest "*/
+/*Input Arguments: "Device Address, Start & End Frequency of frequency band of interest"
+ *
+ * PLEASE READ THIS BEFORE YOU START USING THE PROGRAM: */
 
 int main(int argc, char * argv[])
 {
@@ -46,6 +48,7 @@ int main(int argc, char * argv[])
 			("w, windowing", "If set to true, Blackmann window is applied prior to DFT")
 			("inorder", "If set to true, the DFT is stored in order and NOT DC-centered")
 			("d, Debug", "If set on true, Debug mode is active enabling additional console output")
+			("v, version", "Returns version number")
 			;
 
 
@@ -74,6 +77,12 @@ int main(int argc, char * argv[])
     {
       XdebugMode = false;
     }
+
+
+   if(result["v"].as<bool>())
+     {
+       std::cout << "Version: " << version_number << std::endl;
+     }
 
   if(result["w"].as<bool>())
     {
@@ -189,7 +198,7 @@ int main(int argc, char * argv[])
   DiscreteFourierTransformator *dft_wrapper = new DiscreteFourierTransformator();
 
 
-  time_t init_start_time = time(NULL);  /* Container Variable storing start_time of for first DataFile*/
+  time_t init_start_time = time(NULL);   /* Container Variable storing start_time of for first DataFile */
 
 
   SignalProcessor *sp = nullptr;
@@ -207,12 +216,11 @@ int main(int argc, char * argv[])
   usrp_wrapper->StartUpUSRP();
 
 
-  /*Temporary POINTER to Container of RF samples for hand-over to DFT-wrapper instance*/
-  std::complex<double> * temp_buff_rf;
+  std::complex<double> * temp_buff_rf; /*Temporary POINTER to Container of RF samples for hand-over to DFT-wrapper instance*/
 
 
 
-  /*------------------------------RECEIVING SAMPLES & DATA PROCESSING ----------------------------------*/
+  /*--------------------------------RECEIVING SAMPLES & DATA PROCESSING ---------------------------------------*/
 
 
   while(true)
@@ -249,7 +257,7 @@ int main(int argc, char * argv[])
 
 
 
-      /*CONDITION:
+      /* CONDITION:
        * IF received sample number is SMALLER OR EQUAL than the number of samples expected in defined period T
        * -> load sampls into buffer */
       if(XnumRecvSamplesIntegrationTag <= (kDefaultIntegrationConstant * XsampleRate))
@@ -274,8 +282,8 @@ int main(int argc, char * argv[])
 	  sp->GetDFTData(dft_wrapper->ExportDFTResults());  /* Transfer of data from DFT Class to Signal Processor Class*/
 
 
-	  /*CONDITION: If inorder-flag is NOT set, the
-	   * DFT is stored DC-centered*/
+	  /* CONDITION: If inorder-flag is NOT set, the
+	   * DFT is stored DC-centered */
 	  if(!(result["inorder"].as<bool>()))
 	    {
 	      sp->RearrangeDFT();
@@ -288,17 +296,13 @@ int main(int argc, char * argv[])
 
 
 
-	  /*TODO: Update to Condition:
-	   * -> Now (==) instead of (>=)
-	   */
 	  if((XnumRecvSamplesIntegrationTag) == (kDefaultIntegrationConstant * XsampleRate))
 	    {
 
-	      /*Computes Average*/
-	      sp->IntegratePWR();
+	      sp->IntegratePWR(); /* Computes Average */
 
-	      /*Exports spectrum Data to file*/
-	      sp->ExportRawDataToFile();
+
+	      sp->ExportRawDataToFile();  /* Exports spectrum Data to file */
 
 
 	      sp->ResetIntegrationBuffer();

@@ -13,11 +13,12 @@
 
 #include <string>
 #include <time.h>
+#include <ctime>
 #include <fftw3.h>
 
 
 /*---------------VERSION INFORMATION -----------------------*/
-const std::string version_number = "0.4";
+const std::string version_number = "1.0";
 
 
 

@@ -64,7 +64,7 @@ int SignalProcessor::InitializeOutFile(time_t start_time)
   char buffer[20]; /* Variable needed for processing time information */
 
 
-  struct tm *timeinfo = localtime(&start_time);  /* Variable needed for processing time information */
+  struct tm *timeinfo = gmtime(&start_time);  /* Variable needed for processing time information */
 
 
   strftime(buffer, 20, "%Y%m%d_T%H%M%S", timeinfo);  /* Formats time string */
