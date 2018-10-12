@@ -18,7 +18,7 @@
 
 
 /*---------------VERSION INFORMATION -----------------------*/
-const std::string version_number = "1.0";
+const std::string version_number = "1.2";
 
 
 
@@ -31,26 +31,27 @@ const uint64_t kDefaultSampleRate = 12500000;
 const int8_t kDefaultGain = 0;
 const double kDefaultIntegrationConstant  = 3;
 
-const uint32_t kAdcRate = 100000000;
-const uint32_t kDefaultFrequencyResolution = 10000; /* minimum 10 kHz ferquency resolution */
+const uint32_t kAdcRate = 100000000; /*USRP intern ADC sampling rate */
+const uint32_t kDefaultFrequencyResolution = 10000; /* minimum 10 kHz frequency resolution */
+const uint32_t kMinDFTsize = 1024; /*minimal number of DFT bins*/
 
 
 
 /*-----------------------SIGNAL PROCESSING CONSTANTS----------------------------------------*/
 
 
-/*Defines NUMBER of acquired samples & FFT size -> of course very, very, very important */
+/*Defines DEFAULT NUMBER of acquired samples & FFT size */
 const int32_t kDefaultFFTBinNumber = 1250 ;
 
 /*File Constant defines when a new file for data storage will be create
-DEFINITION: time of file coverage in seconds*/
+DEFINITION: time of file coverage in seconds (7200 -> 2 hours)*/
 const int32_t kFileConstant =  7200;
 
 
 /*Default values for default Usrp constructor*/
 const std::string kConstUsrpAddress = "192.168.10.2";
 const std::string kConstClockSource = "internal";
-const std::string kConstSubDevice = "A:A"; /*For LFRX daughterboard using RXA -> TODO: Verify*/
+const std::string kConstSubDevice = "A:A"; /*For LFRX daughterboard using RXA */
 
 
 typedef enum RFmode {

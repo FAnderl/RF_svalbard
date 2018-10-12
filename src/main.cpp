@@ -28,9 +28,22 @@ bool XdebugMode;
 
 
 
-/*Input Arguments: "Device Address, Start & End Frequency of frequency band of interest"
+/* INSTRUCTIONS & NOTES
+ * This software was designed to automatize frequency band spectrum recordings with deployed USRP devices.
  *
- * PLEASE READ THIS BEFORE YOU START USING THE PROGRAM: */
+ *
+ * The program takes as input:
+ * -l lower frequency of recorded band in Hz
+ * -u upper frequency of recorded band in Hz
+ * -g Specifies USRP gain in dB
+ * -w If this flag is set, Blackman Window is applied prior to DFT
+ * -inorder If this flag is set, DFT output is stored in-order
+ *
+ *
+ * For further information, please read the README
+ *
+ *
+ * */
 
 int main(int argc, char * argv[])
 {
@@ -66,7 +79,7 @@ int main(int argc, char * argv[])
 
 
 
-  RFmode activeRF_mode;  /*Stores active RF mode*/
+  RFmode activeRF_mode;  /*Stores active RF mode */
 
 
   if(result["d"].as<bool>())
@@ -183,10 +196,10 @@ int main(int argc, char * argv[])
   /*-------------------------------------- STANDARD PROCEDURE -----------------------------------------------*/
 
 
-  /*NEW*/
+
   usrp_wrapper->CalculateParameters();
 
-  /*NEW*/
+
   usrp_wrapper->PrepareSampleBuffer();
 
 
@@ -251,7 +264,6 @@ int main(int argc, char * argv[])
        * */
       if(XnumRecvSamplesIntegrationTag == (XsampleRate * 60) + XfftBinNumber) /*TODO: UPDATE-> Changed condition (+XfftBinNumber)*/
 	{
-	  /*UPDATE: 0 -> XfftBinNumber*/
 	  XnumRecvSamplesIntegrationTag = XfftBinNumber;
 	}
 

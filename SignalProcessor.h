@@ -35,7 +35,7 @@ public:
   /*Constructor*/
   SignalProcessor(RFmode rf_m);
 
-  int InitializeOutFile(time_t start_time);
+int InitializeOutFile(time_t start_time);
 
   int RearrangeDFT();
 

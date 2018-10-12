@@ -82,7 +82,8 @@ int SignalProcessor::InitializeOutFile(time_t start_time)
 
   }
 
-  f_noise_spectrum_.open(frequency_band_str_+"@"+date_time_str_+".csv");
+  f_noise_spectrum_.open(frequency_band_str_+"@"+std::to_string(XsampleRate)+"@"+date_time_str_+".csv");
+
 
 
 

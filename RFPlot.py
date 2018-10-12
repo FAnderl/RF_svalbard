@@ -11,7 +11,6 @@
 
 import csv
 import os
-import sys
 import math
 
 import numpy
@@ -22,8 +21,8 @@ from itertools import  cycle
 from tkinter import filedialog
 from tkinter import *
 
-########################################################################
-# README - Instructions - Manual - Anleitung
+###############################################################################################################################################################################
+# README - Instructions - Manual
 #
 #   - This script processes RF Recording Data in form of csv-files
 #   - It creates 24 hour plots of recorded data
@@ -38,25 +37,26 @@ from tkinter import *
 #   -> The script will display a manipulatable plot for every data set + AN AVERAGE PLOT (naturally an average over all data sets)
 #   -> Save from me
 #
-#   IMPORTANT: THE SCRIPT WILL NOT WORK IF THE 2H FILES ARE NOT EXACTLY !!!! SPACED 2 HOURS APART
-#    -> This has to be improved
+#   IMPORTANT: THE SCRIPT WILL NOT WORK IF THE 2H FILES ARE NOT EXACTLY  SPACED 2 HOURS APART
+#    -> This is a bug and has to be fixed
 #   IMPORTANT: THIS SCRIPT WILL ALSO NOT WORK IF DATA FROM TWO DIFFERENT RECORDING SESSIONS ARE IN THE SPECIFIED PATH
+
 #
-#
-#
-# NOTES:
-#
-#
-#
-##########################################################################
+###############################################################################################################################################################################
 
 
+
+# COMPATIBLE WITH RECORDING SOFTWARE VERSION: 1.2
+
+
+
+
+
+# Constants AND Switches
 SWITCH_CHANNEL_MARKERS = True
-
-
-
-
 TIME_STRING = ' UTC'
+
+
 
 # Select Directory
 root = Tk()
@@ -100,7 +100,7 @@ else:
     # Sort Data Files for further data processing
     # TODO: add compatibility for files that are not EXACTLY 2 hours apart
 
-    # FIXME: Make files_sorted_date one dimensional
+    # files_sorted_date is two dimensional but only one dimension is used
     files_sorted_date = [[],[]]
     rf_data_dict = {}
 
@@ -109,13 +109,14 @@ else:
     print("Found:\n")
     for i in csv_list:
         print(i)
-        day_string = i.split('@')[1].split('_')[0]
-        # if not files_sorted_date[0].__contains__(day_string):
-        #     files_sorted_date[0].append(day_string)
-        time_string = i.split('@')[1].split('_')[1].split('.')[0]
+
+        sampling_rate = int(i.split('@')[1]) # in Hz
+
+        day_string = i.split('@')[2].split('_')[0]
+
+        time_string = i.split('@')[2].split('_')[1].split('.')[0]
         time_string = time_string.lstrip('T')
-        # if not files_sorted_date[0][1].__contains__(time_string) :
-        #     files_sorted_date[0][1].append(time_string)
+
         if not rf_data_dict.__contains__(day_string):
             rf_data_dict.setdefault(day_string, [])
 
@@ -156,7 +157,6 @@ else:
     avg_lim = 0
 
     # determine number of full data sets before actual loop containing functionality
-    # FIXME: UGLY HACK
     for idx in range(rf_data_dict.__len__() - 1 ):
 
         # day x
@@ -178,8 +178,8 @@ else:
             avg_lim = avg_lim + 1
 
 
-    # NOTE: range -1, because access with idx+1
-    # Excludes LAST DAY
+
+    # LAST DAY NOT INCLUDED
     for idx in range(rf_data_dict.__len__() - 1 ):
 
         # day x
@@ -193,17 +193,9 @@ else:
             early_bird_raw = idx_list[0]
             early_bird = file_suffix + '@'+files_sorted_date[0][idx] +'_T'+ early_bird_raw+ '.csv'
 
-        #If 12 hour data set is complete (13 set files have to be present !!!) DO
-        # FIXME: NOT ELEGANT
 
-        #NOTE: Condition - if next day contains early_bird
-        # Condition is proper.... for now
-        # Does not calculate last data set if 'early bird' for last day is missing, even though enough files are there
-        # BUG
 
         if next_list.__contains__(early_bird_raw):
-
-
 
 
             file_string = dPath + files_sorted_date[0][idx] + "_" + files_sorted_date[0][idx+1]
@@ -211,16 +203,16 @@ else:
             os.system('if ! [ -d '+ file_string +' ];then mkdir '+ file_string +  '\nfi')
 
             for index in range(len(idx_list)):
-                idx_list[index] = file_suffix+"@"+files_sorted_date[0][idx]+'_T'+idx_list[index]+'.csv'
+                idx_list[index] = file_suffix+"@"+str(sampling_rate)+'@'+files_sorted_date[0][idx]+'_T'+idx_list[index]+'.csv'
 
             for index in range(len(next_list)):
-                next_list[index] = file_suffix +"@"+ files_sorted_date[0][idx+1] +'_T'+ next_list[index] + '.csv'
+                next_list[index] = file_suffix +"@"+str(sampling_rate)+'@'+ files_sorted_date[0][idx+1] +'_T'+ next_list[index] + '.csv'
 
 
 
 
-            set_list = idx_list[list(idx_list).index (file_suffix + '@'+files_sorted_date[0][idx] +'_T'+ early_bird_raw+ '.csv'):] \
-                       + next_list[:(next_list.index(file_suffix + '@' +files_sorted_date[0][idx+1] +'_T'+ early_bird_raw+ '.csv'))]
+            set_list = idx_list[list(idx_list).index (file_suffix + '@'+str(sampling_rate)+'@'+files_sorted_date[0][idx] +'_T'+ early_bird_raw+ '.csv'):] \
+                       + next_list[:(next_list.index(file_suffix + '@' +str(sampling_rate)+'@'+files_sorted_date[0][idx+1] +'_T'+ early_bird_raw+ '.csv'))]
 
             # Moves file sets to corresponding folders
 
@@ -277,28 +269,14 @@ else:
             freq_band = []
 
             if not file_suffix.__contains__('Standardband'):
-                # Miscellaneous Information and Parameters
+                # Defines Miscellaneous Parameters
 
                 freq_band = file_suffix.split( '_' )
                 freq_band[0] = freq_band[0].split( '.' )[0]
                 freq_band[1] = freq_band[1].split( '.' )[0]
-                nyquist_band = int( freq_band[1] ) - int( freq_band[0] )
+                nyquist_band = int( freq_band[1] ) - int( freq_band[0] ) # in kHz
 
-                ###################################################################################################################
-                # NOTE: Ugly hack to get frequency resolution -> Sampling Frequency is UNKNOWN to this script
-                # FIXME: THAT IS OBVIOUSLY NOT OPTIMAL -> FIX FIX FIX
-                if nyquist_band <= 2500:
-                    sampling_rate = 2500000
-                elif nyquist_band > 2500 and nyquist_band < 5000:
-                    sampling_rate = 5000000
-                elif nyquist_band >= 5000 and nyquist_band <= 8000:
-                    sampling_rate = 6250000
-                elif nyquist_band > 8000 and nyquist_band <= 10000:
-                    sampling_rate = 10000000
-                elif nyquist_band > 10000 and nyquist_band < 12500:
-                    sampling_rate = 12500000
-                else:
-                    sampling_rate = 25000000
+                print('Chosen Sampling Rate: '+ str(sampling_rate)+'Hz')
 
             else:
                 nyquist_band = 12000 # in kHz
@@ -410,17 +388,7 @@ else:
                     files_sorted_date[0][idx + 1] +
                     '_' + early_bird_raw + TIME_STRING
                 )
-                # TODO: Remove that, if it proves to be unnecessary
-                """
-                if dAvg == True and avg_count == avg_lim:
-                    pyplot.title(
-                        'HF Power Spectral Density:' + freq_band[0] + '-' + freq_band[
-                            1] + 'kHz - Svalbard - Average 24h\n' + files_sorted_date[0][idx] +
-                        '_' + early_bird_raw + ' - ' +
-                        files_sorted_date[0][avg_count-1] +
-                        '_' + early_bird_raw
-                    )
-                """
+
 
             # Get Colorbar Handle & Change Ticks according to USRP CALIBRATION MEASUREMENTS
             color_bar = pyplot.colorbar( aspect=40)
@@ -521,9 +489,7 @@ else:
                     majorticklocs_x = ax.xaxis.get_majorticklocs()
                     ax.set_xticklabels( ['0', '2', '4', '6', '8', '10', '12', '14', '16', '18', '20', '22', '24'] )
 
-                    # TODO: remove!
-                    # ax.yaxis.set_major_locator(pyplot.MaxNLocator(6))
-                    # ax.set_yticklabels( ['8Mhz',  '11Mhz', '14Mhz', '17Mhz', '20Mhz'] )
+
 
                     if file_suffix.__contains__( 'Standardband' ):
                         y_range = (0., 225.,  625.,  1025., 1250.)
@@ -533,15 +499,10 @@ else:
                         pyplot.xlabel( 'time (h)' )
                         pyplot.ylabel( 'Frequency (Mhz)' )
 
-                        pyplot.title( 'HF Power Plot 8-20 MHz - Svalbard (24h overview)\n' + files_sorted_date[0][idx] +
-                                      '_' + early_bird_raw + ' - ' +
-                                      files_sorted_date[0][idx + 1] +
-                                      '_' + early_bird_raw
-                                      + TIME_STRING)
 
                         if dAvg == True and avg_count == avg_lim:
                             pyplot.title( 'HF Power Plot 8-20 MHz - Svalbard - Average 24h \n' +
-                                          files_sorted_date[0][idx] +
+                                          files_sorted_date[0][0] +
                                           '_' + early_bird_raw + ' - ' +
                                           files_sorted_date[0][avg_count] +
                                           '_' + early_bird_raw +TIME_STRING)
@@ -566,19 +527,13 @@ else:
 
                         pyplot.xlabel( 'time (h)' )
                         pyplot.ylabel( 'Frequency (khz)' )
-                        pyplot.title(
-                            'HF Power Spectral Density:' + freq_band[0] + '-' + freq_band[1] + 'kHz - Svalbard\n' +
-                            files_sorted_date[0][idx] +
-                            '_' + early_bird_raw + ' - ' +
-                            files_sorted_date[0][idx + 1] +
-                            '_' + early_bird_raw +TIME_STRING
-                        )
+
                         if dAvg == True and avg_count == avg_lim:
                             pyplot.title(
                                 'HF Power Spectral Density:' + freq_band[0] + '-' + freq_band[
-                                    1] + 'kHz - Svalbard - Average 24h\n' + files_sorted_date[0][idx] +
+                                    1] + 'kHz - Svalbard - Average 24h\n' + files_sorted_date[0][0] +
                                 '_' + early_bird_raw + ' - ' +
-                                files_sorted_date[0][avg_count - 1] +
+                                files_sorted_date[0][avg_count] +
                                 '_' + early_bird_raw + TIME_STRING
                             )
 

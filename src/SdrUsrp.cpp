@@ -76,7 +76,8 @@ int SdrUsrp::CalculateParameters()
       center_frequency_ = lower_frequency_ + (upper_frequency_ - lower_frequency_)/2;
 
       /*Calculate SdrUsrp center frequency from cmd-defined parameters
-       * -> Fulfills Nyquist + 5% */
+       * -> Fulfills Nyquist + 5% -> Security Band
+       */
       sample_rate_desired_ = (upper_frequency_ - lower_frequency_) +
 	  0.05 *(upper_frequency_ - lower_frequency_) ;
 
@@ -95,9 +96,10 @@ int SdrUsrp::CalculateParameters()
 
       /* This routine only permits fftBinNumbers for which the following conditions are met:
        *  (1) the sample rate is a integer multiple of fftbinNumber
-       *  (2) The FFT contains at least 1024 Bins */
+       *  (2) The FFT contains at least kMinDFTsize Bins
+       *  (3) The frequency resolution of the DFT ouput is at least kDefaultFrequencyResolution*/
       while((std::fmod((double(sample_rate_desired_)/double(temp_freq_res_desired)),1) != 0) || (
-	  double(sample_rate_desired_)/double(temp_freq_res_desired) < 1024))
+	  double(sample_rate_desired_)/double(temp_freq_res_desired) < kMinDFTsize))
 	{
 	  temp_freq_res_desired  = temp_freq_res_desired - 1;
 	}
