@@ -10,10 +10,15 @@ The repository also contains a python script which processes the generated data 
 INSTRUCTIONS - Recording Software
 
  The program takes as input: 
+ 
   -l lower frequency of recorded band in Hz
+  
   -u upper frequency of recorded band in Hz
+  
   -g Specifies USRP gain in dB
+  
   -w If this flag is set, Blackman Window is applied prior to DFT 
+  
   -inorder If this flag is set, DFT output is shttps://www.ettus.com/sdr-software/detail/usrp-hardware-drivertored in-order
   
   
@@ -34,10 +39,14 @@ INSTRUCTIONS - Recording Software
   
   Important Parameters (Constants.h):
   
-  kDefaultFrequencyResolution -> minimal frequency resolution of DFT output
-  kMinDFTsize -> minimal number of DFT bins
-  kFileConstant -> time in seconds after which a new file is generated
-  kDefaultIntegrationConstant -> time in seconds defining how many seconds RF signal is integrated/averaged 
+  - kDefaultFrequencyResolution -> minimal frequency resolution of DFT output
+  
+  - kMinDFTsize -> minimal number of DFT bins
+  
+  - kFileConstant -> time in seconds after which a new file is generated
+  
+  - kDefaultIntegrationConstant -> time in seconds defining how many seconds RF signal is integrated/
+  averaged 
   
   
   
@@ -87,7 +96,8 @@ INSTRUCTIONS - Recording Software
    
    	NOTES: 
    		There are several conditions that have to be fullfilled for the script to work properly:
-   		 (1) only data files of one recording session can be in the specified path AND the subdirectories (IT 			will not work otherwise)
+   		 (1) only data files of one recording session can be in the specified path AND the subdirectories
+   		  (it will not work otherwise)
    		 (2) only data sets for which the FIRST immediate successive data file (12+1.) is present in the 	
    		 specified path are processed
    		 (3) The plots should be saved manually from the pyplot-plots for best quality; however 1600dpi-png 			are saved to the respective subfolders 
