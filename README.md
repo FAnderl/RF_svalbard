@@ -14,12 +14,20 @@ INSTRUCTIONS - Recording Software
  - -l lower frequency of recorded band in Hz
   
  - -u upper frequency of recorded band in Hz
+ 
+ - -a USRP address (192.168.10.2 is Default Address)
   
  - -g Specifies USRP gain in dB
   
  - -w If this flag is set, Blackman Window is applied prior to DFT 
   
-  -inorder If this flag is set, DFT output is shttps://www.ettus.com/sdr-software/detail/usrp-hardware-drivertored in-order
+ - -inorder If this flag is set, DFT output is shttps://www.ettus.com/sdr-software/detail/usrp-hardware-drivertored in-order
+  
+  For example:
+  		
+  		./RF_USRP_Recording -l 9000000 -u 13000000 -w
+  		
+  		for recordings between 9 and 13 MHz with applied windowing 
   
   
  The program generates:
