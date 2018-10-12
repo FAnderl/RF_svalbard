@@ -11,13 +11,13 @@ INSTRUCTIONS - Recording Software
 
  The program takes as input: 
  
-  -l lower frequency of recorded band in Hz
+ - -l lower frequency of recorded band in Hz
   
-  -u upper frequency of recorded band in Hz
+ - -u upper frequency of recorded band in Hz
   
-  -g Specifies USRP gain in dB
+ - -g Specifies USRP gain in dB
   
-  -w If this flag is set, Blackman Window is applied prior to DFT 
+ - -w If this flag is set, Blackman Window is applied prior to DFT 
   
   -inorder If this flag is set, DFT output is shttps://www.ettus.com/sdr-software/detail/usrp-hardware-drivertored in-order
   
