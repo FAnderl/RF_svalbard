@@ -21,7 +21,7 @@ INSTRUCTIONS - Recording Software
   
  - -w If this flag is set, Blackman Window is applied prior to DFT 
   
- - -inorder If this flag is set, DFT output is shttps://www.ettus.com/sdr-software/detail/usrp-hardware-drivertored in-order
+ - -inorder If this flag is set, DFT output is stored in-order
   
   For example:
   		
